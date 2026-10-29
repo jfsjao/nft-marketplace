@@ -6,6 +6,9 @@ import {
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import App from './App'
+import { sessionStore } from './features/session/store'
+import { Login } from './routes/login'
+import { Register } from './routes/register'
 import DesignSystemPreview from './routes/design'
 import { Placeholder } from './routes/placeholder'
 import { loginSearchSchema, validateRedirect } from './routes/redirect'
@@ -40,14 +43,19 @@ const nftRoute = createRoute({
   ),
 })
 
-function requireAuth({
+async function requireAuth({
   context,
   location,
 }: {
   context: RouterContext
   location: { href: string }
 }) {
-  if (context.auth.status !== 'authenticated' || !context.auth.userId) {
+  if (context.auth.status === 'unknown')
+    await sessionStore.ready().catch((error) => {
+      if (sessionStore.getSnapshot().status === 'unknown') throw error
+    })
+  const auth = sessionStore.getSnapshot()
+  if (auth.status !== 'authenticated' || !auth.session?.user.id) {
     throw redirect({
       to: '/login',
       search: { redirect: validateRedirect(location.href) ?? '/' },
@@ -81,14 +89,13 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   validateSearch: (search) => loginSearchSchema.parse(search),
-  component: () => (
-    <Placeholder title="Login" parameters={loginRoute.useSearch()} />
-  ),
+  component: Login,
 })
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
-  component: () => <Placeholder title="Cadastro" />,
+  validateSearch: (search) => loginSearchSchema.parse(search),
+  component: Register,
 })
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,

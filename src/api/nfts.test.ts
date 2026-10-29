@@ -42,7 +42,7 @@ describe('listNfts via Axios e MSW', () => {
       http.get('*/api/nfts', () => new HttpResponse(null, { status: 503 })),
     )
     await expect(listNfts()).rejects.toMatchObject({
-      response: { status: 503 },
+      code: 'SERVICE_UNAVAILABLE',
     })
   })
 
