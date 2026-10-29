@@ -2,7 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
-import App from './App'
+import { RouterProvider } from '@tanstack/react-router'
+import { router } from './router'
 
 const root = createRoot(document.getElementById('root')!)
 const queryClient = new QueryClient({
@@ -18,7 +19,10 @@ async function start() {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <RouterProvider
+          router={router}
+          context={{ queryClient, auth: { userId: null, status: 'guest' } }}
+        />
       </QueryClientProvider>
     </StrictMode>,
   )
