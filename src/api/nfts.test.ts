@@ -24,10 +24,16 @@ describe('listNfts via Axios e MSW', () => {
   })
 
   it('aceita resultado vazio', async () => {
-    server.use(
-      http.get('*/api/nfts', () => HttpResponse.json({ items: [], total: 0 })),
-    )
-    expect(await listNfts()).toEqual({ items: [], total: 0 })
+    const empty = {
+      items: [],
+      page: 1,
+      pageSize: 9,
+      total: 0,
+      totalPages: 0,
+      facets: { collections: [], networks: [] },
+    }
+    server.use(http.get('*/api/nfts', () => HttpResponse.json(empty)))
+    expect(await listNfts()).toEqual(empty)
   })
 
   it('rejeita erro HTTP sem devolver sucesso falso', async () => {
