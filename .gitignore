@@ -1,0 +1,26 @@
+# Dependências e build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Saída do graphify (cache/artefatos, não é código do projeto)
+graphify-out/
+
+# Configurações locais de agentes
+.agents/
+.claude/
+skills-lock.json
+
+# Playwright
+playwright-report/
+test-results/
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Misc
+.DS_Store
+*.log
