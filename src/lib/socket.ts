@@ -1,6 +1,20 @@
 import { io } from 'socket.io-client'
 import { serverEventSchema, type ServerEvent } from '@/domain/events'
 
+const observers = new Set<(event: ServerEvent) => void>()
+const reconnectListeners = new Set<() => void>()
+export function observeRealtime(
+  listener: (event: ServerEvent) => void,
+  reconnect: () => void,
+) {
+  observers.add(listener)
+  reconnectListeners.add(reconnect)
+  return () => {
+    observers.delete(listener)
+    reconnectListeners.delete(reconnect)
+  }
+}
+
 type EventType = ServerEvent['type']
 type Listener = (event: ServerEvent) => void
 
@@ -10,6 +24,9 @@ export function createRealtime(token?: string) {
     typeof location === 'undefined' ? 'http://localhost' : location.origin,
     { transports: ['websocket'], auth: { token }, forceNew: true },
   )
+  socket.on('connect', () => {
+    for (const listener of reconnectListeners) listener()
+  })
   const seen = new Set<string>()
   const versions = new Map<string, number>()
   const listeners = new Map<EventType, Set<Listener>>()
@@ -28,6 +45,7 @@ export function createRealtime(token?: string) {
         return
       seen.add(event.eventId)
       versions.set(key, event.version)
+      for (const observer of observers) observer(event)
       for (const listener of listeners.get(type) ?? []) listener(event)
     })
   }

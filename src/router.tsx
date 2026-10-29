@@ -2,6 +2,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  defaultParseSearch,
   redirect,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
@@ -14,6 +15,7 @@ import { Placeholder } from './routes/placeholder'
 import { loginSearchSchema, validateRedirect } from './routes/redirect'
 import { catalogSearchSchema } from './features/catalog/search'
 import { Catalog } from './routes/catalog'
+import { Nft } from './routes/nft'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -38,9 +40,7 @@ const catalogRoute = createRoute({
 const nftRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/nft/$nftId',
-  component: () => (
-    <Placeholder title="Detalhes do NFT" parameters={nftRoute.useParams()} />
-  ),
+  component: Nft,
 })
 
 async function requireAuth({
@@ -116,6 +116,14 @@ const designRoute = createRoute({
 })
 
 export const router = createRouter({
+  parseSearch: (search) => {
+    const parsed: Record<string, unknown> = { ...defaultParseSearch(search) }
+    const params = new URLSearchParams(search)
+    for (const key of ['min', 'max']) {
+      if (typeof parsed[key] === 'number') parsed[key] = params.get(key)
+    }
+    return parsed
+  },
   routeTree: rootRoute.addChildren([
     catalogRoute,
     nftRoute,

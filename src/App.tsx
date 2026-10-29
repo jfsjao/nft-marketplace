@@ -1,7 +1,9 @@
+import { useCatalogRealtime } from './features/catalog/realtime'
 import { Link, Outlet } from '@tanstack/react-router'
 import { useSession } from './features/session/use-session'
 
 export default function App() {
+  useCatalogRealtime()
   const { session, status, logout } = useSession()
   return (
     <>
