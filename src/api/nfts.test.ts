@@ -16,11 +16,12 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('listNfts via Axios e MSW', () => {
-  it('recebe as quatro artes e mantém o preço como string', async () => {
+  it('recebe o catálogo paginado e mantém o preço como string', async () => {
     const result = await listNfts()
-    expect(result.total).toBe(4)
-    expect(result.items[0].priceEth).toBe('1.19')
-    expect(result.items[0].imageUrl).toBe('/assets/nfts/ape-esmeralda.png')
+    expect(result.total).toBe(30)
+    expect(typeof result.items[0].priceEth).toBe('string')
+    expect(result.items).toHaveLength(9)
+    expect(result.items[0].imageUrl).toContain('/assets/nfts/')
   })
 
   it('aceita resultado vazio', async () => {
