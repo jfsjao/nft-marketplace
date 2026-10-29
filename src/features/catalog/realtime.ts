@@ -31,8 +31,9 @@ export function useCatalogRealtime() {
             .then(() => client.invalidateQueries({ queryKey: ['nfts'] }))
         },
         () => {
-          void client.invalidateQueries({ queryKey: ['nft'] })
-          void client.invalidateQueries({ queryKey: ['nfts'] })
+          // Reconexão: eventos perdidos não voltam, então recarrega pela API.
+          for (const key of ['nft', 'nfts', 'cart', 'quote', 'order'])
+            void client.invalidateQueries({ queryKey: [key] })
         },
       ),
     [client],

@@ -5,13 +5,13 @@ const observers = new Set<(event: ServerEvent) => void>()
 const reconnectListeners = new Set<() => void>()
 export function observeRealtime(
   listener: (event: ServerEvent) => void,
-  reconnect: () => void,
+  reconnect?: () => void,
 ) {
   observers.add(listener)
-  reconnectListeners.add(reconnect)
+  if (reconnect) reconnectListeners.add(reconnect)
   return () => {
     observers.delete(listener)
-    reconnectListeners.delete(reconnect)
+    if (reconnect) reconnectListeners.delete(reconnect)
   }
 }
 

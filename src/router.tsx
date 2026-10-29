@@ -16,6 +16,7 @@ import { loginSearchSchema, validateRedirect } from './routes/redirect'
 import { catalogSearchSchema } from './features/catalog/search'
 import { Catalog } from './routes/catalog'
 import { Nft } from './routes/nft'
+import { Cart } from './routes/cart'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -66,7 +67,7 @@ async function requireAuth({
 const cartRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/cart',
-  component: () => <Placeholder title="Carrinho" />,
+  component: Cart,
 })
 const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
