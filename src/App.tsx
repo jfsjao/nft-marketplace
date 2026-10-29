@@ -1,3 +1,4 @@
+import { CatalogPreview } from '@/features/catalog/CatalogPreview'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ export default function DesignSystemPreview() {
             marketplace.
           </p>
         </header>
+        <CatalogPreview />
         <Card>
           <CardHeader>
             <CardTitle>Ações e estados</CardTitle>
