@@ -57,6 +57,8 @@ export async function checkout(page: Page) {
   await page
     .getByRole('combobox', { name: 'Carteira', exact: true })
     .selectOption('wallet-1')
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByRole('status')).toContainText('Conectada:')
   for (const [label, value] of Object.entries({
     'Nome de exibição': 'Colecionador',
     Usuário: 'colecionador',

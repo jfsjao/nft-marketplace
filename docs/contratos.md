@@ -73,9 +73,10 @@ Erros comuns a todas as rotas: `VALIDATION_ERROR` para entrada inválida e `SERV
 | DELETE | `/profile/avatar`               | usuário  | nenhum                             | `userSchema`                   | nenhum                                                                                              |
 | POST   | `/profile/password`             | usuário  | corpo: `changePasswordInputSchema` | 204: sem corpo                 | nenhum                                                                                              |
 | GET    | `/wallets`                      | usuário  | nenhum                             | array de `walletSchema`        | nenhum                                                                                              |
+| POST   | `/wallets/:id/connect`          | usuário  | nenhum                             | `walletSchema`                 | `NOT_FOUND`, `CONFLICT`                                                                             |
 | PUT    | `/wallets/:slot`                | usuário  | corpo: `walletInputSchema`         | `walletSchema`                 | `CONFLICT`                                                                                          |
 
-Os parâmetros de caminho identificam os recursos, sem criar schemas adicionais. Em `/wallets/:slot`, `slot` aceita `primary` ou `secondary` e deve coincidir com o campo obrigatório do corpo.
+Os parâmetros de caminho identificam os recursos, sem criar schemas adicionais. Em `/wallets/:slot`, `slot` aceita `primary` ou `secondary` e deve coincidir com o campo obrigatório do corpo. `POST /wallets/:id/connect` simula a conexão: retorna a carteira conectada ou `CONFLICT` quando a carteira recusa.
 
 Catálogo: a URL da interface usa `q`; o cliente mapeia para `search` na API. A query aceita somente os campos de `catalogQuerySchema`: `search`, `collections`, `networks`, `minPriceEth`, `maxPriceEth`, `tab`, `sort`, `page`, `pageSize`. Serializar arrays repetindo a chave, por exemplo `/api/nfts?collections=music&collections=gaming&networks=ethereum`. Converter paginação da query textual para números antes de validar. Defaults: `tab=all`, `sort=recent`, `page=1`, `pageSize=9`, com máximo de 48 itens por página.
 

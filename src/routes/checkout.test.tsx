@@ -88,6 +88,8 @@ function setup() {
 async function review(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByText('1.01 ETH')
   await user.selectOptions(await screen.findByLabelText('Carteira'), 'w1')
+  await user.click(screen.getByRole('button', { name: 'Conectar carteira' }))
+  await screen.findByText(/Conectada:/)
   for (const label of [
     'Nome de exibição',
     'Usuário',
@@ -111,6 +113,8 @@ it('reenvia a mesma chave e corpo após erro de rede, inclusive ao recarregar', 
   vi.mocked(orders.createOrder)
     .mockRejectedValueOnce(new Error('Network Error'))
     .mockResolvedValue(order)
+  // Pedido ainda pendente: ao recarregar, a tentativa salva é retomada com a mesma chave.
+  vi.mocked(orders.getOrder).mockResolvedValue({ ...order, status: 'pending' })
   const user = setup()
   await review(user)
   await screen.findByText(/Resultado desconhecido/)
@@ -162,4 +166,59 @@ it('QUOTE_STALE mostra a nova cotação e exige revisão e aceite antes de nova 
   const calls = vi.mocked(orders.createOrder).mock.calls
   expect(calls[1]![0].quoteId).toBe('q2')
   expect(calls[1]![1]).not.toBe(calls[0]![1])
+})
+
+it('associa o erro do coletor ao campo inválido', async () => {
+  const user = setup()
+  await screen.findByText('1.01 ETH')
+  await user.selectOptions(await screen.findByLabelText('Carteira'), 'w1')
+  await user.click(screen.getByRole('button', { name: 'Conectar carteira' }))
+  await screen.findByText(/Conectada:/)
+  await user.click(screen.getByRole('button', { name: 'Revisar pedido' }))
+
+  const input = screen.getByLabelText('Nome de exibição')
+  const error = screen.getByText('Informe o nome de exibição')
+  expect(input).toHaveAttribute('aria-invalid', 'true')
+  expect(input).toHaveAttribute('aria-describedby', error.id)
+})
+
+it('recusa de conexão mantém o envio bloqueado', async () => {
+  vi.mocked(wallets.connectWallet).mockRejectedValue({
+    code: 'CONFLICT',
+    message: 'Conexão recusada na carteira',
+    requestId: 'r1',
+  })
+  const user = setup()
+  await screen.findByText('1.01 ETH')
+  await user.selectOptions(await screen.findByLabelText('Carteira'), 'w1')
+  await user.click(screen.getByRole('button', { name: 'Conectar carteira' }))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Conexão recusada na carteira',
+  )
+  expect(screen.getByRole('button', { name: 'Revisar pedido' })).toBeDisabled()
+  expect(orders.createOrder).not.toHaveBeenCalled()
+})
+
+it('remove cupom inválido e refaz a cotação sem ele', async () => {
+  localStorage.setItem('kurio:coupon:user-1', 'EXPIRADO')
+  vi.mocked(quotes.createQuote)
+    .mockRejectedValueOnce({
+      code: 'COUPON_EXPIRED',
+      message: 'Expirado',
+      requestId: 'r1',
+    })
+    .mockResolvedValueOnce(quote)
+  setup()
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cupom expirado')
+  await waitFor(() => expect(quotes.createQuote).toHaveBeenCalledTimes(2))
+  expect(vi.mocked(quotes.createQuote).mock.calls[0]![0]).toEqual({
+    network: 'ethereum',
+    couponCode: 'EXPIRADO',
+  })
+  expect(vi.mocked(quotes.createQuote).mock.calls[1]![0]).toEqual({
+    network: 'ethereum',
+  })
+  expect(localStorage.getItem('kurio:coupon:user-1')).toBeNull()
 })

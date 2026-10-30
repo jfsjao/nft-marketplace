@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useForm, useWatch } from 'react-hook-form'
@@ -7,9 +7,10 @@ import { checkoutInputSchema, type CheckoutInput } from '@/domain/order'
 import type { Quote } from '@/domain/quote'
 import { apiErrorSchema } from '@/domain/errors'
 import { networkSchema } from '@/domain/common'
-import { getWallets } from '@/api/wallets'
+import { connectWallet, getWallets } from '@/api/wallets'
 import { createQuote } from '@/api/quote'
-import { createOrder } from '@/api/orders'
+import { createOrder, getOrder } from '@/api/orders'
+import { getCoupon, setCoupon } from '@/features/cart/coupon'
 import { useSession } from '@/features/session/use-session'
 import { sessionStore } from '@/features/session/store'
 import { useRealtimeEvent } from '@/features/realtime/use-realtime-event'
@@ -50,11 +51,16 @@ function CheckoutForm({
   const [message, setMessage] = useState('')
   const [quote, setQuote] = useState<Quote | null>(null)
   const [review, setReview] = useState<CheckoutInput | null>(null)
+  const [connecting, setConnecting] = useState(false)
+  const [connectedWalletId, setConnectedWalletId] = useState<string | null>(
+    null,
+  )
   const form = useForm<CheckoutInput>({
     resolver: zodResolver(checkoutInputSchema),
     defaultValues: { network: 'ethereum', provider: 'metamask' },
   })
   const network = useWatch({ control: form.control, name: 'network' })
+  const walletId = useWatch({ control: form.control, name: 'walletId' })
   const wallets = useQuery({
     queryKey: ['wallets', userId],
     queryFn: ({ signal }) => getWallets(signal),
@@ -115,19 +121,6 @@ function CheckoutForm({
       if (current()) setBusy(false)
     }
   }
-  const resume = useEffectEvent(() => {
-    const saved = readAttempt(userId)
-    if (saved) void send(saved)
-  })
-  useEffect(() => {
-    let active = true
-    queueMicrotask(() => {
-      if (active) resume()
-    })
-    return () => {
-      active = false
-    }
-  }, [])
   const quoteRequest = useRef<AbortController | null>(null)
   const refreshQuote = useCallback(async () => {
     quoteRequest.current?.abort()
@@ -136,13 +129,55 @@ function CheckoutForm({
     setQuote(null)
     setReview(null)
     try {
-      const data = await createQuote({ network }, abort.signal)
+      const couponCode = getCoupon(userId)
+      let data: Quote
+      try {
+        data = await createQuote({ network, couponCode }, abort.signal)
+      } catch (error) {
+        const failure = apiErrorSchema.safeParse(error)
+        if (
+          !couponCode ||
+          !failure.success ||
+          !['COUPON_EXPIRED', 'COUPON_INVALID'].includes(failure.data.code)
+        )
+          throw error
+        setCoupon(userId)
+        data = await createQuote({ network }, abort.signal)
+        setMessage(
+          failure.data.code === 'COUPON_EXPIRED'
+            ? 'Cupom expirado. A cotação foi atualizada sem cupom.'
+            : 'Cupom inválido. A cotação foi atualizada sem cupom.',
+        )
+      }
       if (!abort.signal.aborted && current()) setQuote(data)
     } catch {
       if (!abort.signal.aborted && current())
         setMessage('Não foi possível obter a cotação.')
     }
-  }, [network, current])
+  }, [network, userId, current])
+  const resume = async (saved: Attempt) => {
+    if (saved.orderId) {
+      try {
+        const order = await getOrder(saved.orderId)
+        if (!current()) return
+        if (order.status !== 'pending') {
+          clearAttempt(userId, saved.key)
+          setAttempt(null)
+          await refreshQuote()
+          return
+        }
+      } catch {
+        if (current())
+          setMessage('Não foi possível consultar a tentativa salva.')
+        return
+      }
+    }
+    await send(saved)
+  }
+  useEffect(() => {
+    const saved = readAttempt(userId)
+    if (saved) void resume(saved)
+  }, [])
   useEffect(() => {
     let active = true
     queueMicrotask(() => {
@@ -171,6 +206,28 @@ function CheckoutForm({
       'Preço ou estoque alterado. Atualize a cotação antes de revisar.',
     )
   })
+  const selectedWallet = wallets.data?.find((wallet) => wallet.id === walletId)
+
+  async function connect() {
+    if (!selectedWallet || connecting) return
+    setConnecting(true)
+    setMessage('')
+    try {
+      await connectWallet(selectedWallet.id)
+      if (current()) setConnectedWalletId(selectedWallet.id)
+    } catch (error) {
+      if (!current()) return
+      const failure = apiErrorSchema.safeParse(error)
+      setMessage(
+        failure.success
+          ? failure.data.message
+          : 'Não foi possível conectar a carteira.',
+      )
+      setConnectedWalletId(null)
+    } finally {
+      if (current()) setConnecting(false)
+    }
+  }
 
   return (
     <section className="space-y-6">
@@ -179,7 +236,7 @@ function CheckoutForm({
       {attempt ? (
         <>
           <p role="status">Tentativa de compra em andamento.</p>
-          <Button disabled={busy} onClick={() => void send(attempt)}>
+          <Button disabled={busy} onClick={() => void resume(attempt)}>
             Tentar de novo
           </Button>
         </>
@@ -208,6 +265,12 @@ function CheckoutForm({
                   })
                   return
                 }
+                if (connectedWalletId !== wallet.id) {
+                  form.setError('walletId', {
+                    message: 'Conecte a carteira antes de revisar.',
+                  })
+                  return
+                }
                 if (quote && quote.network === data.network) setReview(data)
                 else setMessage('Atualize a cotação para a rede selecionada.')
               })}
@@ -230,33 +293,60 @@ function CheckoutForm({
                       'referralCode',
                       'ensName',
                     ] as const
-                  ).map((field) => (
-                    <label key={field}>
-                      {
-                        {
-                          displayName: 'Nome de exibição',
-                          username: 'Usuário',
-                          profileName: 'Nome do perfil',
-                          email: 'E-mail',
-                          referralCode: 'Código de indicação',
-                          ensName: 'Nome ENS',
-                        }[field]
+                  ).map((field) => {
+                    const error = form.formState.errors.collector?.[field]
+                    const id = `collector-${field}`
+                    return (
+                      <div key={field}>
+                        <label htmlFor={id}>
+                          {
+                            {
+                              displayName: 'Nome de exibição',
+                              username: 'Usuário',
+                              profileName: 'Nome do perfil',
+                              email: 'E-mail',
+                              referralCode: 'Código de indicação',
+                              ensName: 'Nome ENS',
+                            }[field]
+                          }
+                        </label>
+                        <Input
+                          id={id}
+                          {...form.register(`collector.${field}`)}
+                          type={field === 'email' ? 'email' : 'text'}
+                          aria-invalid={!!error}
+                          aria-describedby={error ? `${id}-error` : undefined}
+                        />
+                        {error && (
+                          <p
+                            className="mt-2 text-xs text-destructive"
+                            id={`${id}-error`}
+                          >
+                            {error.message}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div>
+                    <label htmlFor="note">Observação</label>
+                    <Input
+                      id="note"
+                      {...form.register('note')}
+                      aria-invalid={!!form.formState.errors.note}
+                      aria-describedby={
+                        form.formState.errors.note ? 'note-error' : undefined
                       }
-                      <Input
-                        {...form.register(`collector.${field}`)}
-                        type={field === 'email' ? 'email' : 'text'}
-                      />
-                    </label>
-                  ))}
-                  <label>
-                    Observação
-                    <Input {...form.register('note')} />
-                  </label>
-                  {Object.values(form.formState.errors).map((error, index) => (
-                    <p role="alert" key={index}>
-                      {error.message ?? 'Revise os campos do coletor.'}
-                    </p>
-                  ))}
+                    />
+                    {form.formState.errors.note && (
+                      <p
+                        className="mt-2 text-xs text-destructive"
+                        id="note-error"
+                      >
+                        {form.formState.errors.note.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <aside className="min-w-0 space-y-5 rounded-2xl bg-card p-5 md:rounded-lg">
                   <h2 className="font-semibold">Seus NFTs</h2>
@@ -277,12 +367,16 @@ function CheckoutForm({
                   </Button>
                   <h3 className="text-sm font-semibold">Carteira e rede</h3>
                   <div className="grid gap-4 text-sm [&_label]:space-y-2 [&_select]:w-full">
-                    <label>
-                      Carteira
+                    <div>
+                      <label htmlFor="walletId">Carteira</label>
                       <select
+                        id="walletId"
                         {...form.register('walletId')}
                         onChange={(event) => {
                           form.setValue('walletId', event.target.value)
+                          form.clearErrors('walletId')
+                          setConnectedWalletId(null)
+                          setReview(null)
                           const wallet = wallets.data?.find(
                             (wallet) => wallet.id === event.target.value,
                           )
@@ -291,6 +385,12 @@ function CheckoutForm({
                             form.setValue('provider', wallet.provider)
                           }
                         }}
+                        aria-invalid={!!form.formState.errors.walletId}
+                        aria-describedby={
+                          form.formState.errors.walletId
+                            ? 'walletId-error'
+                            : undefined
+                        }
                       >
                         <option value="">Selecione</option>
                         {wallets.data?.map((wallet) => (
@@ -299,20 +399,80 @@ function CheckoutForm({
                           </option>
                         ))}
                       </select>
-                    </label>
-                    <label>
-                      Rede
-                      <select {...form.register('network')}>
+                      {form.formState.errors.walletId && (
+                        <p
+                          className="mt-2 text-xs text-destructive"
+                          id="walletId-error"
+                        >
+                          {form.formState.errors.walletId.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="network">Rede</label>
+                      <select
+                        id="network"
+                        {...form.register('network')}
+                        onChange={(event) => {
+                          form.setValue(
+                            'network',
+                            networkSchema.parse(event.target.value),
+                          )
+                          setConnectedWalletId(null)
+                          setReview(null)
+                        }}
+                        aria-invalid={!!form.formState.errors.network}
+                        aria-describedby={
+                          form.formState.errors.network
+                            ? 'network-error'
+                            : undefined
+                        }
+                      >
                         {networkSchema.options.map((value) => (
                           <option key={value}>{value}</option>
                         ))}
                       </select>
-                    </label>
+                      {form.formState.errors.network && (
+                        <p
+                          className="mt-2 text-xs text-destructive"
+                          id="network-error"
+                        >
+                          {form.formState.errors.network.message}
+                        </p>
+                      )}
+                    </div>
+                    {connectedWalletId === selectedWallet?.id ? (
+                      <div className="space-y-2">
+                        <p role="status">
+                          Conectada: {selectedWallet.address.slice(0, 6)}…
+                          {selectedWallet.address.slice(-4)}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setConnectedWalletId(null)
+                            setReview(null)
+                          }}
+                        >
+                          Desconectar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={!selectedWallet || connecting}
+                        onClick={() => void connect()}
+                      >
+                        {connecting ? 'Conectando…' : 'Conectar carteira'}
+                      </Button>
+                    )}
                   </div>
                   <Button
                     className="h-12 w-full rounded-full md:rounded-md"
                     type="submit"
-                    disabled={!quote}
+                    disabled={!quote || connectedWalletId !== walletId}
                   >
                     Revisar pedido
                   </Button>
@@ -366,14 +526,15 @@ function CheckoutForm({
               <OrderSummary snapshot={quote} />
               <Button
                 className="h-12 w-full"
-                disabled={busy}
-                onClick={() =>
+                disabled={busy || connectedWalletId !== review.walletId}
+                onClick={() => {
+                  if (connectedWalletId !== review.walletId) return
                   void send({
                     userId,
                     key: crypto.randomUUID(),
                     body: { ...review, quoteId: quote.id },
                   })
-                }
+                }}
               >
                 Aceitar e enviar pedido
               </Button>

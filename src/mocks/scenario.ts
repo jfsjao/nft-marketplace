@@ -17,6 +17,7 @@ export interface Scenario {
   sessionTtlMs: number
   event?: 'price-change' | 'sold-out'
   orderOutcome?: 'timeout' | 'declined'
+  walletOutcome?: 'reject'
 }
 
 const defaults: Scenario = {
@@ -45,6 +46,7 @@ export const presets = {
   'sold-out': { ...defaults, event: 'sold-out' },
   'order-timeout': { ...defaults, orderOutcome: 'timeout' },
   'payment-declined': { ...defaults, orderOutcome: 'declined' },
+  'wallet-rejected': { ...defaults, walletOutcome: 'reject' },
 } satisfies Record<string, Scenario>
 
 const key = 'kurio:mock-scenario'
