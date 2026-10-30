@@ -51,7 +51,7 @@ Cada conta começa com uma carteira Ethereum principal simulada. O seed tem 30 N
 | `LANCAMENTO` | 5% de desconto no subtotal |
 | `EXPIRADO` | Erro de cupom expirado |
 
-A taxa de rede é adicionada após o desconto. Cupons exigem autenticação. Um código não cadastrado, como `INVALIDO`, retorna erro de cupom inválido.
+A taxa de rede é adicionada após o desconto. O visitante já vê desconto, taxa e total no carrinho; o cupom aceito é lembrado e aplicado de novo na cotação do checkout. Um código não cadastrado, como `INVALIDO`, retorna erro de cupom inválido.
 
 ## Cenários
 
@@ -73,6 +73,7 @@ window.__kurioMock.getScenario()
 | `sold-out` | Dois segundos após uma cotação com itens, zera o estoque da primeira edição cotada e emite `nft.updated` |
 | `order-timeout` | Persiste o pedido e falha na resposta inicial; reenvio recupera o mesmo pedido |
 | `payment-declined` | Cria pedido pendente que termina recusado |
+| `wallet-rejected` | A carteira recusa a conexão no checkout e o pedido não pode ser enviado |
 
 Os eventos de preço e estoque são consumidos uma vez. Ative novamente o preset para repeti-los. A configuração de sessão afeta sessões criadas depois da seleção.
 
@@ -110,7 +111,8 @@ Comece cada fluxo com o reset. Use a compra de referência quando indicado.
 | Sessão expirada | Abra `/?scenario=session-expired`, faça login e tente acessar perfil ou checkout. O 401 encerra a sessão. Volte ao preset `default`, entre novamente com a mesma conta e retome a rota protegida. Para expirar uma sessão já aberta durante o checkout, use o exemplo abaixo. |
 | Login inválido e cadastro conflitante | Entre com senha incorreta; depois tente cadastrar o e-mail de uma conta do seed com os demais campos válidos. Corrija os dados para prosseguir. |
 | Formulários inválidos | Envie campos obrigatórios vazios; no perfil, tente alterar a senha com senha atual incorreta; em carteiras, informe endereço incompatível com a rede. Corrija os campos indicados. |
-| Cupom inválido ou expirado | Autenticado e com item no carrinho, aplique `INVALIDO` ou `EXPIRADO`. Remova ou substitua por `KURIO10`. |
+| Carteira recusada | No checkout, ative `wallet-rejected` e clique em **Conectar carteira**. A recusa aparece e o envio fica bloqueado; **Desconectar** volta ao estado inicial. |
+| Cupom inválido ou expirado | Com item no carrinho, aplique `INVALIDO` ou `EXPIRADO`. Remova ou substitua por `KURIO10`. |
 | Falha em favorito | Autenticado, configure a falha pontual abaixo e clique em **Favoritar**. O estado otimista volta ao anterior e a consulta reconcilia; tente novamente. |
 | Preço alterado | Prepare o checkout, execute `setScenario('price-change')` pelo controle e clique em **Atualizar cotação**. Revise antes de dois segundos e aguarde o aviso. O aceite anterior é removido; atualize, revise e aceite os novos valores. |
 | Edição esgotada | Repita o fluxo anterior com `sold-out`. Após o evento, atualize a cotação e volte ao carrinho para remover ou trocar a edição indisponível. |
@@ -153,7 +155,11 @@ Para latência variável, use `window.__kurioMock.setScenario({ latency: 'variab
 | `npm run test:e2e` | Playwright em Chromium desktop 1440 × 900 e mobile 390 × 844 |
 | `npm run test:e2e:ui` | Interface interativa do Playwright |
 
-O Playwright executa build e preview na porta 4173 com mocks ativos. Deixe a porta livre. O relatório fica em `playwright-report/`; traces são retidos em falhas. Não há script de auditoria Lighthouse no `package.json`; medições e regressão visual com baselines ainda são pendências da entrega.
+| `npm run audit` | Lighthouse CI: build otimizado, início e detalhe, mobile e desktop, três execuções cada |
+
+O Playwright executa build e preview na porta 4173 com mocks ativos. Deixe a porta livre. O relatório fica em `playwright-report/`; traces são retidos em falhas. A regressão visual compara início, detalhe, carrinho e pagamento com as baselines versionadas em `e2e/__screenshots__`; depois de uma mudança visual intencional, gere de novo com `npx playwright test e2e/visual.spec.ts --update-snapshots`.
+
+A auditoria usa o Chromium do Playwright: `CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())") npm run audit`. Os relatórios HTML e JSON ficam em `lighthouse/mobile` e `lighthouse/desktop`; as medianas e a análise estão em [docs/lighthouse.md](docs/lighthouse.md).
 
 ## Estrutura
 

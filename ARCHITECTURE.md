@@ -41,7 +41,7 @@ Na confirmação, o servidor desconta uma única vez apenas as quantidades compr
 
 ## Cache do TanStack Query
 
-O QueryClient usa `staleTime: 30_000` e `retry: false`. Leituras falhas dependem de nova tentativa na interface; mutations não têm retry genérico. O contrato permite até duas repetições transitórias, mas o comportamento atual é não repetir automaticamente.
+O QueryClient usa `staleTime: 30_000`. Leituras repetem no máximo duas vezes, e só em falha transitória (`SERVICE_UNAVAILABLE` ou erro de rede); respostas 4xx nunca repetem. Mutations não têm retry: compra e favoritos tratam a falha com idempotência e rollback.
 
 | Recurso | Chave |
 | --- | --- |
@@ -94,14 +94,23 @@ Checkout separa preenchimento, revisão e aceite. Alterações de preço ou esto
 
 ## Limitações conhecidas
 
-- Pagamentos, carteiras, transações e explorador são simulações. Não há blockchain, extensão ou gateway real. A seleção de carteira no checkout não implementa um ciclo separado de conexão, recusa e desconexão da carteira.
+- Pagamentos, carteiras, transações e explorador são simulações. Não há blockchain, extensão ou gateway real. A conexão da carteira é um `POST /wallets/:id/connect` no mock, que aceita ou recusa conforme o cenário (`wallet-rejected`); o pedido só é enviado com a carteira conectada.
 - O banco usa armazenamento local do navegador, sem sincronização entre dispositivos ou garantia transacional entre abas. Token local e hash com salt pertencem à simulação, não a uma solução de autenticação para produção.
 - `reset()` restaura banco e cenário, mas não limpa sozinho sessão do cliente, visitante, tentativas, cache, listeners ou todos os timers. O README inclui limpeza complementar e recarga.
 - Latência `variable` usa `Math.random()`, sem seed de aleatoriedade. Não há preset separado para vazio, conflito de cadastro ou cada erro de validação; esses fluxos usam entradas ou configurações pontuais.
-- Cupom aplicado no carrinho fica no estado local da tela; o checkout cria sua própria cotação sem transportar esse cupom. Não há persistência do cupom entre essas telas.
-- A cobertura E2E existente não comprova toda a matriz do enunciado. Não há baselines de regressão visual nem script ou relatórios Lighthouse nesta versão. Metas de auditoria e fidelidade final não estão atestadas por esta documentação.
+- O cupom aceito fica no armazenamento local por dono do carrinho (visitante ou usuário) e é reaplicado pela cotação do checkout; se expirar entre as telas, o checkout avisa e segue sem ele.
+- Resultados Lighthouse abaixo da meta estão justificados em [docs/lighthouse.md](docs/lighthouse.md). O MSW roda no navegador do avaliador e faz parte da entrega, então seu custo de inicialização entra na medição.
 - O fallback da Vercel atende rotas da SPA. Desativar mocks exige fornecer backend e Socket.IO; o deploy estático sozinho não os oferece.
 
 ## Desvios do Figma
 
-TODO: após fechar o design, listar diferenças por tela, substituições de assets e ajustes de acessibilidade, conferindo 390, 768 e 1440 px.
+Conferido em 390, 768 e 1440 px contra os frames exportados.
+
+- **Todas as telas:** links Mercado, Criadores e Aprenda, newsletter do rodapé e login com Google ou Facebook estão fora do escopo. Aparecem como no layout, mas desabilitados ou levando a uma página que informa isso, sem simular sucesso.
+- **Início:** no mobile, os filtros da barra lateral viram um drawer acessível com o botão Filtros. Há um título "Catálogo" visível só no mobile, porque a página precisa de um `h1` para leitores de tela. As contagens das coleções vêm da API e mudam com os filtros, em vez dos números fixos do layout.
+- **Detalhe:** a galeria mostra uma única imagem, porque cada NFT tem só uma arte exportada; as miniaturas do layout ficam de fora. "Comprar" adiciona ao carrinho e leva ao checkout; "Adicionar ao carrinho" existe ao lado, porque o fluxo de carrinho é obrigatório.
+- **Carrinho e pagamento:** o campo "Código promocional" ganhou o botão "Aplicar cupom" e mensagens de erro. No pagamento, a carteira vem das carteiras cadastradas e é preciso conectá-la antes de revisar; "Tipo de carteira" e "Endereço" do layout ficam no cadastro de carteiras, para não duplicar dados.
+- **Confirmação:** o mesmo cartão também representa pedido pendente e recusado, que o layout não desenha. "Ver no Etherscan" aponta para um explorador simulado.
+- **Perfil e carteiras:** o menu lateral mostra só Dados do perfil, Carteiras e Sair; Atividade, Ofertas, Arquivos baixados e Suporte estão fora do escopo.
+- **Assets:** as imagens dos NFTs foram convertidas de PNG para WebP para reduzir o peso, sem mudar o recorte. A fonte Roboto Mono é servida localmente.
+- **Acessibilidade:** foco visível em todos os controles e skeletons com `role="status"` respeitando `prefers-reduced-motion`.
