@@ -49,7 +49,6 @@ function OrderContents({
         ? cached
         : result
     },
-    retry: false,
     refetchInterval: (query) =>
       query.state.data?.status === 'pending' ? 2000 : false,
   })

@@ -22,7 +22,6 @@ export function Wallets() {
     queryKey: ['wallets', session?.user.id],
     queryFn: ({ signal }) => getWallets(signal),
     enabled: !!session,
-    retry: false,
   })
   return (
     <AccountLayout>

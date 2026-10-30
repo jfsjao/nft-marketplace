@@ -157,6 +157,12 @@ describe('REST com banco persistente', () => {
     expect(merged.data.items[0].quantity).toBe(10)
     expect(merged.data.adjustments[0].reason).toBe('quantity-reduced')
     expect(
+      (await call('/cart', 'GET', undefined, token)).data.adjustments,
+    ).toHaveLength(1)
+    expect(
+      (await call('/cart', 'GET', undefined, token)).data.adjustments,
+    ).toEqual([])
+    expect(
       (await call('/cart/merge', 'POST', { guestId: 'visitante' }, token)).data
         .itemCount,
     ).toBe(10)
@@ -242,6 +248,12 @@ describe('REST com banco persistente', () => {
     expect(result.data.code).toBe('QUOTE_STALE')
     quoteSchema.parse(result.data.quote)
     expect(result.data.quote.lines[0].unitPriceEth).toBe('2')
+    const adjusted = (await call('/cart', 'GET', undefined, token)).data
+    expect(adjusted.adjustments[0].reason).toBe('price-changed')
+    expect(adjusted.items[0].unitPriceEth).toBe('2')
+    expect(
+      (await call('/cart', 'GET', undefined, token)).data.adjustments,
+    ).toEqual([])
     expect((await getDb()).orders).toHaveLength(0)
   })
   it('timeout persiste e replay recupera sem mudar o desfecho', async () => {

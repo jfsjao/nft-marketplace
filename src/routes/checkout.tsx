@@ -58,7 +58,6 @@ function CheckoutForm({
   const wallets = useQuery({
     queryKey: ['wallets', userId],
     queryFn: ({ signal }) => getWallets(signal),
-    retry: false,
   })
   const current = useCallback(
     () => generation === sessionStore.getSnapshot().generation,

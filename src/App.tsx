@@ -22,7 +22,6 @@ export default function App() {
     queryKey: ['auth-session', session?.user.id],
     queryFn: getSession,
     enabled: status === 'authenticated',
-    retry: false,
   })
   const location = useLocation()
   const authPage = ['/login', '/register'].includes(location.pathname)
@@ -30,7 +29,6 @@ export default function App() {
     queryKey: ['cart', session?.user.id ?? guestId],
     queryFn: ({ signal }) => getCart(signal),
     enabled: status !== 'unknown',
-    retry: false,
   })
   const count =
     cart.data?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0

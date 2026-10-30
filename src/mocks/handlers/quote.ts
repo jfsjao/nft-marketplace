@@ -17,6 +17,21 @@ export function makeQuote(
     cart.items.some((i) => i.quantity > i.availableQuantity)
   ) {
     const stored = db.carts[id]
+    const adjustments = cart.items.flatMap((item) => {
+      if (item.quantity <= item.availableQuantity) return []
+      return [
+        {
+          nftId: item.nftId,
+          editionId: item.editionId,
+          reason: item.availableQuantity
+            ? ('quantity-reduced' as const)
+            : ('removed-sold-out' as const),
+          message: item.availableQuantity
+            ? 'Quantidade limitada ao estoque disponível.'
+            : 'Item removido porque está esgotado.',
+        },
+      ]
+    })
     stored.items = stored.items.flatMap((item) => {
       const available = cart.items.find(
         (i) => i.nftId === item.nftId && i.editionId === item.editionId,
@@ -24,6 +39,8 @@ export function makeQuote(
       const quantity = Math.min(item.quantity, available)
       return quantity ? [{ ...item, quantity }] : []
     })
+    stored.adjustments ??= []
+    stored.adjustments.push(...adjustments)
     stored.revision++
     cart = cartView(id, db)
   }

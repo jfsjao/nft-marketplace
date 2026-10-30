@@ -34,7 +34,6 @@ function CartContents() {
     queryKey: cartKey,
     queryFn: ({ signal }) => getCart(signal),
     enabled: status !== 'unknown',
-    retry: false,
   })
   const quoteKey = [
     'quote',
@@ -50,7 +49,6 @@ function CartContents() {
       status === 'authenticated' &&
       !!cart.data?.items.length &&
       !cart.isFetching,
-    retry: false,
   })
   const mutation = useMutation({
     mutationFn: ({ item, quantity }: { item: CartItem; quantity?: number }) =>

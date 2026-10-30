@@ -16,14 +16,25 @@ export function editionFor(db: MockDb, nftId: string, editionId: string) {
 }
 export const cartHandlers = [
   route('get', '/cart', async ({ request }) =>
-    json(await commit((db) => cartView(owner(request, db), db))),
+    json(
+      await commit((db) => {
+        const id = owner(request, db)
+        const view = cartView(id, db)
+        if (db.carts[id]) db.carts[id].adjustments = []
+        return view
+      }),
+    ),
   ),
   route('post', '/cart/items', async ({ request }) => {
     const input = await body(request, addCartItemInputSchema)
     return json(
       await commit((db) => {
         const id = owner(request, db)
-        const cart = (db.carts[id] ??= { items: [], revision: 0 })
+        const cart = (db.carts[id] ??= {
+          items: [],
+          revision: 0,
+          adjustments: [],
+        })
         const item = cart.items.find(
           (i) => i.nftId === input.nftId && i.editionId === input.editionId,
         )
@@ -79,7 +90,11 @@ export const cartHandlers = [
       await commit((db) => {
         const id = userId(request, db)
         const source = `guest:${input.guestId}`
-        const cart = (db.carts[id] ??= { items: [], revision: 0 })
+        const cart = (db.carts[id] ??= {
+          items: [],
+          revision: 0,
+          adjustments: [],
+        })
         const adjustments: CartAdjustment[] = []
         if (db.carts[source]) {
           for (const item of db.carts[source].items) {
@@ -103,9 +118,11 @@ export const cartHandlers = [
           }
           cart.items = cart.items.filter((i) => i.quantity > 0)
           cart.revision++
+          cart.adjustments ??= []
+          cart.adjustments.push(...adjustments)
           delete db.carts[source]
         }
-        return { ...cartView(id, db), adjustments }
+        return cartView(id, db)
       }),
     )
   }),

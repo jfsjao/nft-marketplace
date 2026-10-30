@@ -80,6 +80,7 @@ describe('banco do mock', () => {
     await commit((db) => {
       db.carts['guest:demo'] = {
         revision: 2,
+        adjustments: [],
         items: [
           { nftId: 'nft-1', editionId: 'nft-1-edition-1', quantity: 1 },
           { nftId: 'nft-2', editionId: 'nft-2-edition-2', quantity: 3 },

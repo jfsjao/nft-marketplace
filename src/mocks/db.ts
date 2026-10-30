@@ -1,5 +1,10 @@
 import type { User } from '@/domain/auth'
-import { cartSchema, type AddCartItemInput, type Cart } from '@/domain/cart'
+import {
+  cartSchema,
+  type AddCartItemInput,
+  type Cart,
+  type CartAdjustment,
+} from '@/domain/cart'
 import type { Edition } from '@/domain/nft'
 import type { Order } from '@/domain/order'
 import type { Quote } from '@/domain/quote'
@@ -19,7 +24,14 @@ export interface MockDb {
   sessions: { token: string; userId: string; expiresAt: string }[]
   nfts: ReturnType<typeof seedNfts>
   favorites: Record<string, string[]>
-  carts: Record<string, { items: AddCartItemInput[]; revision: number }>
+  carts: Record<
+    string,
+    {
+      items: AddCartItemInput[]
+      revision: number
+      adjustments: CartAdjustment[]
+    }
+  >
   quotes: (Quote & { userId: string })[]
   orders: (Order & {
     settleAt?: string
@@ -109,8 +121,10 @@ export async function getDb(): Promise<MockDb> {
         Array.isArray(saved.nfts) &&
         saved.carts &&
         saved.counters
-      )
+      ) {
+        for (const cart of Object.values(saved.carts)) cart.adjustments ??= []
         return saved
+      }
     } catch {
       /* Banco ausente ou inválido: restaura o seed. */
     }
@@ -184,6 +198,6 @@ export function cartView(ownerId: string, db = currentDb()): Cart {
     itemCount: items.reduce((total, item) => total + item.quantity, 0),
     subtotalEth: addEth(...items.map((item) => item.lineTotalEth)),
     revision: cart?.revision ?? 0,
-    adjustments: [],
+    adjustments: cart?.adjustments ?? [],
   })
 }

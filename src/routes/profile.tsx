@@ -29,7 +29,6 @@ export function Profile() {
     queryKey: ['profile', session?.user.id],
     queryFn: ({ signal }) => getProfile(signal),
     enabled: !!session,
-    retry: false,
   })
   return (
     <AccountLayout>
