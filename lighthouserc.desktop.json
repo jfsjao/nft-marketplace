@@ -1,0 +1,12 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run preview -- --port 4180 --strictPort",
+      "startServerReadyPattern": "Local",
+      "url": ["http://localhost:4180/", "http://localhost:4180/nft/nft-1"],
+      "numberOfRuns": 3,
+      "settings": { "chromeFlags": "--headless=new --no-sandbox","preset": "desktop" }
+    },
+    "upload": { "target": "filesystem", "outputDir": "lighthouse/desktop" }
+  }
+}
