@@ -75,7 +75,9 @@ export async function changeEdition(
   editionId: string,
   patch: Partial<Pick<Edition, 'priceEth' | 'availableQuantity'>>,
 ) {
-  publish(
-    await commit((db) => updateEdition(db, nftId, editionId, patch, true)),
+  const event = await commit((db) =>
+    updateEdition(db, nftId, editionId, patch, true),
   )
+  publish(event)
+  return event
 }

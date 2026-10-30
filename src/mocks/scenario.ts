@@ -1,4 +1,9 @@
 import type { ApiErrorCode } from '@/domain/errors'
+import type { ServerEvent } from '@/domain/events'
+import type { Edition } from '@/domain/nft'
+import { changeEdition } from './actions'
+import { publish } from './realtime'
+import { disconnectMockSockets, mockSocketClientCount } from './socket'
 
 export interface Scenario {
   latency: 'none' | 'fast' | 'slow' | 'variable'
@@ -92,6 +97,11 @@ if (typeof window !== 'undefined') {
     },
     setScenario,
     getScenario,
+    changeEdition,
+    replayEvent: (event, eventId = event.eventId) =>
+      publish({ ...event, eventId } as ServerEvent),
+    disconnectSockets: disconnectMockSockets,
+    connectedSockets: mockSocketClientCount,
   }
 }
 
@@ -101,6 +111,14 @@ declare global {
       reset: () => Promise<void>
       setScenario: typeof setScenario
       getScenario: typeof getScenario
+      changeEdition: (
+        nftId: string,
+        editionId: string,
+        patch: Partial<Pick<Edition, 'priceEth' | 'availableQuantity'>>,
+      ) => Promise<Extract<ServerEvent, { type: 'nft.updated' }>>
+      replayEvent: (event: ServerEvent, eventId?: string) => void
+      disconnectSockets: () => void
+      connectedSockets: () => number
     }
   }
 }

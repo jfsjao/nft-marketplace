@@ -28,6 +28,7 @@ export function AsyncState({
     if (layout === 'catalog')
       return (
         <div
+          role="status"
           aria-label={loading}
           className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-12"
         >
@@ -44,6 +45,7 @@ export function AsyncState({
     if (layout === 'detail')
       return (
         <div
+          role="status"
           aria-label={loading}
           className="grid gap-6 md:grid-cols-2 md:gap-8 lg:gap-12"
         >
@@ -58,7 +60,14 @@ export function AsyncState({
           </div>
         </div>
       )
-    return <Skeleton aria-label={loading} className={className} />
+    return (
+      <Skeleton
+        role="status"
+        aria-hidden={false}
+        aria-label={loading}
+        className={className}
+      />
+    )
   }
   if (state.isError)
     return (

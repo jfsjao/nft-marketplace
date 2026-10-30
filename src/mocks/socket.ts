@@ -6,6 +6,15 @@ import { subscribe } from './realtime'
 // O MSW remove /socket.io/ antes de comparar o endpoint.
 const socketLink = ws.link(/^wss?:\/\/[^/]+\/$/)
 
+export function disconnectMockSockets() {
+  for (const client of socketLink.clients)
+    client.close(1012, 'Interrupção simulada')
+}
+
+export function mockSocketClientCount() {
+  return socketLink.clients.size
+}
+
 export const socketHandler = socketLink.addEventListener(
   'connection',
   (connection) => {

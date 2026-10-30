@@ -20,16 +20,21 @@ export const profileHandlers = [
       await commit((db) => {
         const id = userId(request, db)
         const user = db.users.find((u) => u.id === id)!
+        if (input.version !== user.version) throw new Failure(409, 'CONFLICT')
+        if (db.users.some((u) => u.id !== id && u.username === input.username))
+          throw new Failure(409, 'CONFLICT', 'Usuário já cadastrado', {
+            username: ['Usuário já cadastrado'],
+          })
         if (
-          input.version !== user.version ||
           db.users.some(
             (u) =>
               u.id !== id &&
-              (u.username === input.username ||
-                u.email.toLowerCase() === input.email.toLowerCase()),
+              u.email.toLowerCase() === input.email.toLowerCase(),
           )
         )
-          throw new Failure(409, 'CONFLICT')
+          throw new Failure(409, 'CONFLICT', 'E-mail já cadastrado', {
+            email: ['E-mail já cadastrado'],
+          })
         Object.assign(user, input, { version: user.version + 1 })
         return userSchema.parse(user)
       }),
