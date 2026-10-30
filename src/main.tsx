@@ -19,7 +19,10 @@ async function start() {
   mount()
 }
 
-start().catch(() => {
+const fail = () => {
   document.getElementById('root')!.innerHTML =
     '<p role="alert">Não foi possível iniciar a aplicação. Recarregue a página para tentar novamente.</p>'
-})
+}
+
+// Deixa o navegador pintar o shell do index.html antes de carregar o app.
+requestAnimationFrame(() => setTimeout(() => start().catch(fail)))
