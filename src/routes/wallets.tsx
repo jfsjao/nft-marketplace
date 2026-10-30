@@ -1,3 +1,5 @@
+import { networkLabel, providerLabel } from '@/lib/format'
+import type { Network, WalletProvider } from '@/domain/common'
 import { AccountLayout } from '@/components/account-layout'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -133,7 +135,11 @@ function WalletForm({
                 ? networkSchema
                 : walletProviderSchema
               ).options.map((value) => (
-                <option key={value}>{value}</option>
+                <option key={value} value={value}>
+                  {field === 'network'
+                    ? networkLabel[value as Network]
+                    : providerLabel[value as WalletProvider]}
+                </option>
               ))}
             </select>
             {form.formState.errors[field] && (

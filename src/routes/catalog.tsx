@@ -1,3 +1,4 @@
+import { networkLabel } from '@/lib/format'
 import { KurioHero } from '@/components/kurio-hero'
 import { CatalogFilters } from '@/components/catalog-filters'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
@@ -81,9 +82,7 @@ export function Catalog() {
                       gaming: 'Jogos',
                       subscriptions: 'Assinaturas',
                       utility: 'Utilidade',
-                      ethereum: 'Ethereum',
-                      polygon: 'Polygon',
-                      solana: 'Solana',
+                      ...networkLabel,
                     }[value]
                   }{' '}
                   {data &&

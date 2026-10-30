@@ -1,3 +1,4 @@
+import { networkLabel, shortAddress } from '@/lib/format'
 import { listNfts } from '@/api/nfts'
 import { NftCard } from '@/components/nft-card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -225,7 +226,7 @@ export function Nft() {
             <div>
               <dt className="inline">Coleção: </dt>
               <dd className="inline">
-                {nft.collectionName} — {nft.network}
+                {nft.collectionName} — {networkLabel[nft.network]}
               </dd>
             </div>
             <div>
@@ -258,12 +259,12 @@ export function Nft() {
           <p>
             <strong className="text-foreground">Rede:</strong>
             <br />
-            {nft.network}
+            {networkLabel[nft.network]}
           </p>
           <p>
             <strong className="text-foreground">Contrato:</strong>
             <br />
-            {nft.contractAddress} · {nft.tokenStandard}
+            {shortAddress(nft.contractAddress)} · {nft.tokenStandard}
           </p>
           <p>
             <strong className="text-foreground">Direitos autorais:</strong>

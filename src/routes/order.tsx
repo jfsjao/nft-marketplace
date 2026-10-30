@@ -1,3 +1,4 @@
+import { shortAddress } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { formatEth } from '@/lib/eth'
 import { useEffect } from 'react'
@@ -117,7 +118,9 @@ function OrderContents({
             <div>
               <dt>ID da transação</dt>
               <dd className="mt-2 break-all">
-                {data.transactionHash ?? 'Aguardando'}
+                {data.transactionHash
+                  ? shortAddress(data.transactionHash)
+                  : 'Aguardando'}
               </dd>
             </div>
             <div>
@@ -137,7 +140,7 @@ function OrderContents({
               <dd className="mt-2">
                 {data.provider}
                 <span className="mt-1 block break-all">
-                  {data.walletAddress}
+                  {shortAddress(data.walletAddress)}
                 </span>
               </dd>
             </div>

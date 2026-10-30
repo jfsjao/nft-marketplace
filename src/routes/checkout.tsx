@@ -1,3 +1,4 @@
+import { networkLabel } from '@/lib/format'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -429,7 +430,9 @@ function CheckoutForm({
                         }
                       >
                         {networkSchema.options.map((value) => (
-                          <option key={value}>{value}</option>
+                          <option key={value} value={value}>
+                            {networkLabel[value]}
+                          </option>
                         ))}
                       </select>
                       {form.formState.errors.network && (

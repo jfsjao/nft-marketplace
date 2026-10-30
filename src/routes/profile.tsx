@@ -1,3 +1,6 @@
+import { ImageIcon } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { AccountLayout } from '@/components/account-layout'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -141,62 +144,85 @@ function ProfileForms({
         className="my-8 space-y-4 rounded-lg border bg-card p-5"
       >
         <h2 className="mb-5 font-semibold">Avatar</h2>
-        {(preview || user.avatarUrl) && (
-          <img
-            src={preview || user.avatarUrl}
-            alt="Avatar do perfil"
-            className="size-20 rounded-full object-cover"
-          />
-        )}
-        <label htmlFor="avatar">Imagem do avatar</label>
-        <Input
-          id="avatar"
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          disabled={busy}
-          aria-invalid={!!avatarError}
-          aria-describedby={avatarError ? 'avatar-error' : undefined}
-          onChange={(event) => {
-            setPreview(undefined)
-            setAvatarError('')
-            setAvatarSuccess('')
-            const file = event.target.files?.[0]
-            if (!file) return
-            if (
-              !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
-              file.size > 1024 * 1024
-            ) {
-              setAvatarError('Use PNG, JPEG ou WebP de até 1 MiB.')
-              return
-            }
-            const reader = new FileReader()
-            reader.onload = () => {
-              if (current() && event.target.files?.[0] === file)
-                setPreview(String(reader.result))
-            }
-            reader.onerror = () => {
-              if (current()) setAvatarError('Não foi possível ler a imagem.')
-            }
-            reader.readAsDataURL(file)
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          {preview || user.avatarUrl ? (
+            <img
+              src={preview || user.avatarUrl}
+              alt="Avatar do perfil"
+              className="size-14 rounded-full object-cover"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="grid size-14 place-items-center rounded-full border bg-background text-primary"
+            >
+              <ImageIcon className="size-6" />
+            </span>
+          )}
+          {/* O input nativo fica oculto; o rótulo faz o papel de botão, em português. */}
+          <label
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
+            )}
+          >
+            <span className="sr-only">Imagem do avatar: </span>
+            Escolher imagem
+            <Input
+              id="avatar"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={busy}
+              aria-invalid={!!avatarError}
+              aria-describedby={avatarError ? 'avatar-error' : undefined}
+              onChange={(event) => {
+                setPreview(undefined)
+                setAvatarError('')
+                setAvatarSuccess('')
+                const file = event.target.files?.[0]
+                if (!file) return
+                if (
+                  !['image/png', 'image/jpeg', 'image/webp'].includes(
+                    file.type,
+                  ) ||
+                  file.size > 1024 * 1024
+                ) {
+                  setAvatarError('Use PNG, JPEG ou WebP de até 1 MiB.')
+                  return
+                }
+                const reader = new FileReader()
+                reader.onload = () => {
+                  if (current() && event.target.files?.[0] === file)
+                    setPreview(String(reader.result))
+                }
+                reader.onerror = () => {
+                  if (current())
+                    setAvatarError('Não foi possível ler a imagem.')
+                }
+                reader.readAsDataURL(file)
+              }}
+              className="sr-only"
+            />
+          </label>
+          <Button
+            disabled={busy || !preview || form.formState.isSubmitting}
+            onClick={() => void avatar()}
+          >
+            Alterar
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={busy || form.formState.isSubmitting}
+            onClick={() => void avatar(true)}
+          >
+            Remover
+          </Button>
+        </div>
         {avatarError && (
           <p id="avatar-error" role="alert">
             {avatarError}
           </p>
         )}
-        <Button
-          disabled={busy || !preview || form.formState.isSubmitting}
-          onClick={() => void avatar()}
-        >
-          Alterar
-        </Button>
-        <Button
-          disabled={busy || form.formState.isSubmitting}
-          onClick={() => void avatar(true)}
-        >
-          Remover
-        </Button>
         {avatarSuccess && <p role="status">{avatarSuccess}</p>}
       </section>
       <form

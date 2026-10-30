@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react'
+import { Link } from '@tanstack/react-router'
+import { X } from 'lucide-react'
+import { catalogSearchSchema } from '@/features/catalog/search'
 import { KurioHero } from './kurio-hero'
 
 export function AuthLayout({ children }: { children: ReactNode }) {
@@ -24,6 +27,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-background/70" />
       </div>
       <section className="relative z-10 mx-auto max-w-md space-y-8 py-10 md:border-b-8 md:border-primary md:bg-card md:px-10 md:py-12 md:shadow-2xl">
+        <Link
+          to="/"
+          search={catalogSearchSchema.parse({})}
+          aria-label="Fechar"
+          className="absolute top-4 right-4 rounded p-1 text-primary hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <X className="size-5" />
+        </Link>
         <p className="mb-16 text-center text-3xl font-bold tracking-widest md:hidden">
           KURIO
         </p>
