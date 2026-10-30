@@ -17,6 +17,8 @@ import { catalogSearchSchema } from './features/catalog/search'
 import { Catalog } from './routes/catalog'
 import { Nft } from './routes/nft'
 import { Cart } from './routes/cart'
+import { Checkout } from './routes/checkout'
+import { Order } from './routes/order'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -73,18 +75,13 @@ const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   beforeLoad: requireAuth,
-  component: () => <Placeholder title="Pagamento" />,
+  component: Checkout,
 })
 const orderRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/orders/$orderId',
   beforeLoad: requireAuth,
-  component: () => (
-    <Placeholder
-      title="Confirmação de pedido"
-      parameters={orderRoute.useParams()}
-    />
-  ),
+  component: Order,
 })
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
