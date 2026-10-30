@@ -1,7 +1,7 @@
 import { quoteInputSchema, type QuoteInput } from '@/domain/quote'
 import { addEth, applyPercentDiscount } from '@/lib/eth'
 import { cartView, commit, getDb, now, type MockDb } from '../db'
-import { getScenario } from '../scenario'
+import { getScenario, setScenario } from '../scenario'
 import { changeEdition } from '../actions'
 import { body, Failure, json, route, userId } from './util'
 
@@ -83,24 +83,25 @@ export function makeQuote(
   db.quotes.push(quote)
   return quote
 }
+let eventScheduled = false
+
 export const quoteHandlers = [
   route('post', '/quote', async ({ request }) => {
     const input = await body(request, quoteInputSchema)
     const result = await commit((db) => {
       const quote = makeQuote(db, userId(request, db), input)
-      return { quote, firstQuote: db.quotes[0] }
+      return { quote }
     })
     const event = getScenario().event
-    if (
-      event &&
-      result.quote.lines.length &&
-      result.firstQuote.id === result.quote.id
-    ) {
+    if (event && result.quote.lines.length && !eventScheduled) {
+      eventScheduled = true
       const first = result.quote.lines[0]
       setTimeout(() => {
+        eventScheduled = false
         void (async () => {
           if (!(await getDb()).quotes.some((q) => q.id === result.quote.id))
             return
+          setScenario({ event: undefined })
           await changeEdition(
             first.nftId,
             first.editionId,

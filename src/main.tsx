@@ -18,6 +18,8 @@ async function start() {
   if (import.meta.env.VITE_ENABLE_MOCKS !== 'false') {
     const { worker } = await import('./mocks/browser')
     await worker.start({ onUnhandledRequest: 'bypass' })
+    const { settle } = await import('./mocks/handlers/util')
+    await settle()
   }
 
   root.render(

@@ -90,8 +90,10 @@ it('conecta, filtra por sessão e versão, reconecta e libera assinaturas', asyn
     socket.on('order.updated', orders[index]),
   )
   const received = vi.fn()
-  const client = createRealtime('owner')
+  const client = createRealtime('owner', db.users[1].id)
   clients.push(client)
+  const privateReceived = vi.fn()
+  client.on('order.updated', privateReceived)
   const removeListener = client.on('nft.updated', received)
   await vi.waitFor(() => expect(subscription).toHaveBeenCalledTimes(6))
   const nft: NftUpdatedEvent = {
@@ -123,6 +125,7 @@ it('conecta, filtra por sessão e versão, reconecta e libera assinaturas', asyn
       expect(listener).toHaveBeenCalledWith(nft),
     )
   })
+  expect(privateReceived).not.toHaveBeenCalled()
   orders.slice(1).forEach((listener) => expect(listener).not.toHaveBeenCalled())
   realtime.publish(nft)
   realtime.publish({ ...nft, eventId: 'old', version: 1 })

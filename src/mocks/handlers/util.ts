@@ -77,7 +77,7 @@ export async function settle() {
       if (order.status !== 'pending' || Date.parse(order.settleAt!) > now())
         continue
       order.status =
-        getScenario().orderOutcome === 'declined' ? 'declined' : 'confirmed'
+        order.orderOutcome === 'declined' ? 'declined' : 'confirmed'
       order.version++
       order.settledAt = new Date(now()).toISOString()
       if (order.status === 'declined') {

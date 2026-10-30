@@ -4,7 +4,7 @@ import type { Edition } from '@/domain/nft'
 import type { Order } from '@/domain/order'
 import type { Quote } from '@/domain/quote'
 import { addEth, multiplyEth } from '@/lib/eth'
-import { getScenario } from './scenario'
+import { getScenario, type Scenario } from './scenario'
 import {
   networkFees,
   seedCoupons,
@@ -21,7 +21,10 @@ export interface MockDb {
   favorites: Record<string, string[]>
   carts: Record<string, { items: AddCartItemInput[]; revision: number }>
   quotes: (Quote & { userId: string })[]
-  orders: (Order & { settleAt?: string })[]
+  orders: (Order & {
+    settleAt?: string
+    orderOutcome?: Scenario['orderOutcome']
+  })[]
   idempotency: {
     userId: string
     key: string

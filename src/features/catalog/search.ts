@@ -9,8 +9,14 @@ import {
 
 export const catalogSearchSchema = z.object({
   q: z.string().trim().max(80).catch(''),
-  collections: z.array(collectionSchema).catch([]),
-  networks: z.array(networkSchema).catch([]),
+  collections: z.preprocess(
+    (value) => (typeof value === 'string' ? [value] : value),
+    z.array(collectionSchema).catch([]),
+  ),
+  networks: z.preprocess(
+    (value) => (typeof value === 'string' ? [value] : value),
+    z.array(networkSchema).catch([]),
+  ),
   min: ethAmountSchema.optional().catch(undefined),
   max: ethAmountSchema.optional().catch(undefined),
   tab: catalogTabSchema.catch('all'),

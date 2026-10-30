@@ -7,9 +7,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const { status, session, generation } = useSession()
   useEffect(() => {
     if (status === 'unknown') return
-    const realtime = createRealtime(session?.token)
+    const realtime = createRealtime(session?.token, session?.user.id)
     sessionStore.setRealtime(realtime.disconnect)
     return realtime.disconnect
-  }, [status, session?.token, generation])
+  }, [status, session?.token, session?.user.id, generation])
   return children
 }

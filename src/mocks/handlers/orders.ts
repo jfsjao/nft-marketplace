@@ -8,7 +8,7 @@ import { publish } from '../realtime'
 import { getScenario } from '../scenario'
 import { editionFor } from './cart'
 import { makeQuote } from './quote'
-import { Failure, json, route, userId } from './util'
+import { Failure, json, route, settle, userId } from './util'
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
@@ -113,6 +113,7 @@ export const orderHandlers = [
         id: `order-${++db.counters.id}`,
         userId: id,
         status: 'pending' as const,
+        orderOutcome: getScenario().orderOutcome,
         version: 1,
         lines: structuredClone(quote.lines),
         subtotalEth: quote.subtotalEth,
@@ -159,7 +160,12 @@ export const orderHandlers = [
       )
     if (!('order' in result) || !result.order) throw new Error('Pedido ausente')
     result.events!.forEach(publish)
-    if (!result.replay && getScenario().orderOutcome === 'timeout')
+    if (!result.replay)
+      setTimeout(
+        () => void settle(),
+        Math.max(0, Date.parse(result.order.settleAt!) - now()),
+      )
+    if (!result.replay && result.order.orderOutcome === 'timeout')
       return HttpResponse.error()
     return json(orderSchema.parse(result.order), {
       status: result.replay ? 200 : 201,

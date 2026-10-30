@@ -19,7 +19,7 @@ type EventType = ServerEvent['type']
 type Listener = (event: ServerEvent) => void
 
 // Conectar somente depois de await worker.start().
-export function createRealtime(token?: string) {
+export function createRealtime(token?: string, userId?: string) {
   const socket = io(
     typeof location === 'undefined' ? 'http://localhost' : location.origin,
     { transports: ['websocket'], auth: { token }, forceNew: true },
@@ -36,6 +36,8 @@ export function createRealtime(token?: string) {
       const parsed = serverEventSchema.safeParse(payload)
       if (!parsed.success || parsed.data.type !== type) return
       const event = parsed.data
+      if (event.type === 'order.updated' && event.resource.userId !== userId)
+        return
       const key = JSON.stringify(
         event.type === 'nft.updated'
           ? [event.type, event.resource.nftId, event.resource.editionId]

@@ -3,6 +3,16 @@ import type { CatalogSearch } from './search'
 import { catalogSearchSchema, toCatalogQuery, withFilter } from './search'
 
 describe('search do catálogo', () => {
+  it('aceita ?collections=music e uma rede única', () => {
+    const params = Object.fromEntries(
+      new URLSearchParams('?collections=music&networks=polygon'),
+    )
+    expect(catalogSearchSchema.parse(params)).toMatchObject({
+      collections: ['music'],
+      networks: ['polygon'],
+    })
+  })
+
   it('aplica os padrões', () => {
     expect(catalogSearchSchema.parse({})).toEqual({
       q: '',

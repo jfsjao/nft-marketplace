@@ -1,9 +1,20 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import {
+  vi,
+  afterEach,
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from '../handlers'
 import { getDb, resetDb } from '../db'
-import { setScenario } from '../scenario'
+import { getScenario, setScenario } from '../scenario'
+import { subscribe } from '../realtime'
+import { settle } from './util'
 import { changeEdition } from '../actions'
 import { apiErrorSchema } from '@/domain/errors'
 import { orderSchema } from '@/domain/order'
@@ -12,6 +23,9 @@ import { quoteSchema } from '@/domain/quote'
 const server = setupServer(...handlers)
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterAll(() => server.close())
+afterEach(() => {
+  vi.useRealTimers()
+})
 beforeEach(async () => {
   setScenario({
     latency: 'none',
@@ -230,7 +244,7 @@ describe('REST com banco persistente', () => {
     expect(result.data.quote.lines[0].unitPriceEth).toBe('2')
     expect((await getDb()).orders).toHaveLength(0)
   })
-  it('timeout persiste e replay recupera; recusa libera reserva', async () => {
+  it('timeout persiste e replay recupera sem mudar o desfecho', async () => {
     const token = await login()
     const input = await checkout(token)
     setScenario('order-timeout')
@@ -246,10 +260,10 @@ describe('REST com banco persistente', () => {
     expect(
       (await call(`/orders/${replay.data.id}`, 'GET', undefined, token)).data
         .status,
-    ).toBe('declined')
-    expect((await getDb()).nfts[1].editions[1].availableQuantity).toBe(10)
+    ).toBe('confirmed')
+    expect((await getDb()).nfts[1].editions[1].availableQuantity).toBe(8)
     expect((await call('/cart', 'GET', undefined, token)).data.itemCount).toBe(
-      2,
+      0,
     )
   })
   it('isola favoritos, perfil, carteiras e cotação', async () => {
@@ -284,20 +298,33 @@ describe('REST com banco persistente', () => {
   })
 })
 
-it('eventos de cenário alteram a primeira linha após dois segundos', async () => {
-  const token = await login()
-  setScenario({ event: 'price-change' })
-  const input = await checkout(token)
-  await new Promise((resolve) => setTimeout(resolve, 2100))
-  expect((await getDb()).nfts[1].editions[1].priceEth).toBe('1.79')
-  expect(
-    (
-      await call('/orders', 'POST', input, token, {
-        'Idempotency-Key': 'changed',
-      })
-    ).data.code,
-  ).toBe('QUOTE_STALE')
-})
+it.each(['price-change', 'sold-out'] as const)(
+  'cenário %s dispara uma vez após a primeira cotação ativa',
+  async (event) => {
+    const token = await login()
+    await checkout(token)
+    setScenario({ event })
+    const input = await checkout(token)
+    await call('/quote', 'POST', {}, token)
+    await new Promise((resolve) => setTimeout(resolve, 2100))
+    expect((await getDb()).nfts[1].editions[1]).toMatchObject(
+      event === 'price-change'
+        ? { priceEth: '1.79' }
+        : { availableQuantity: 0 },
+    )
+    expect(getScenario().event).toBeUndefined()
+    await call('/quote', 'POST', {}, token)
+    await new Promise((resolve) => setTimeout(resolve, 2100))
+    expect((await getDb()).nfts[1].editions[1].version).toBe(2)
+    expect(
+      (
+        await call('/orders', 'POST', input, token, {
+          'Idempotency-Key': 'changed',
+        })
+      ).data.code,
+    ).toBe('QUOTE_STALE')
+  },
+)
 
 it('cotação vencida ou estoque zerado exige novo aceite', async () => {
   const token = await login()
@@ -400,3 +427,38 @@ it('perfil, avatar, senha e carteiras mantêm versão e privacidade', async () =
     (await call('/wallets', 'GET', undefined, await login(true))).data,
   ).toHaveLength(1)
 })
+
+it.each(['timer', 'bootstrap'])(
+  'liquida por %s com o desfecho da criação',
+  async (mode) => {
+    const token = await login()
+    const input = await checkout(token)
+    setScenario({ orderOutcome: 'declined' })
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    const events = vi.fn()
+    const unsubscribe = subscribe(events)
+    try {
+      const request = call('/orders', 'POST', input, token, {
+        'Idempotency-Key': mode,
+      })
+      await vi.advanceTimersByTimeAsync(0)
+      await request
+      setScenario({ orderOutcome: undefined })
+      if (mode === 'timer') await vi.advanceTimersByTimeAsync(1500)
+      else {
+        vi.setSystemTime(Date.now() + 2000)
+        await settle()
+      }
+      expect((await getDb()).orders[0].status).toBe('declined')
+      expect(events).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'order.updated',
+          data: { status: 'declined' },
+        }),
+      )
+      expect((await getDb()).nfts[1].editions[1].availableQuantity).toBe(10)
+    } finally {
+      unsubscribe()
+    }
+  },
+)
