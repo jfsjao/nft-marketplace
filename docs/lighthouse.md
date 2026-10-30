@@ -6,16 +6,16 @@ Comando: `npm run audit` (configuração em `lighthouserc.mobile.json` e `lighth
 
 | Perfil | Página | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| mobile | `/` | 53 | 99 | 100 | 92 | 4,6 s | 0,000 | 1.136 ms |
-| mobile | `/nft/nft-1` | 52 | 100 | 100 | 92 | 4,8 s | 0,000 | 1.482 ms |
-| desktop | `/` | 94 | 98 | 100 | 92 | 1,0 s | 0,000 | 150 ms |
-| desktop | `/nft/nft-1` | 91 | 100 | 100 | 92 | 1,0 s | 0,000 | 211 ms |
+| mobile | `/` | 70 | 99 | 100 | 92 | 2,3 s | 0,000 | 1.539 ms |
+| mobile | `/nft/nft-1` | 54 | 100 | 100 | 92 | 4,9 s | 0,000 | 1.526 ms |
+| desktop | `/` | 96 | 98 | 100 | 92 | 0,5 s | 0,000 | 166 ms |
+| desktop | `/nft/nft-1` | 96 | 100 | 100 | 92 | 1,0 s | 0,000 | 141 ms |
 
 Metas do enunciado: Performance ≥ 90, Accessibility ≥ 95, Best Practices ≥ 95, SEO ≥ 90. Todas atendidas, exceto Performance no perfil mobile.
 
 ## Por que o mobile fica abaixo de 90
 
-O perfil mobile simula CPU 4× mais lenta e rede 4G. Nele, o trabalho na thread principal soma cerca de 4,7 s, dos quais 2,4 s são execução de JavaScript. A maior parte vem da simulação que o enunciado exige no build de demonstração:
+O perfil mobile simula CPU 4× mais lenta e rede 4G. Nele, o bloqueio da thread principal (TBT) fica em cerca de 1,5 s, quase todo interpretação do JavaScript de React, TanStack Router e Query, Zod e MSW. A maior parte vem da simulação que o enunciado exige no build de demonstração:
 
 - O MSW registra o service worker e intercepta as chamadas antes de o catálogo ter dados. O LCP (a imagem do primeiro NFT) depende dessa resposta.
 - O banco simulado é lido e gravado no armazenamento local, e o Socket.IO simulado conecta logo depois.
@@ -26,10 +26,11 @@ O que já foi feito:
 
 - Rotas separadas em chunks (`lazyRouteComponent`): o JavaScript inicial caiu para cerca de 91 kB comprimidos.
 - Imagens dos NFTs em WebP: de cerca de 430 kB para 28 kB cada, com `width`/`height`, `loading="lazy"` fora da primeira dobra e `fetchpriority="high"` na imagem principal.
+- Cabeçalho e hero do início vêm prontos no `index.html` (app shell) e o app só carrega depois da primeira pintura: o LCP do início mobile caiu de 4,6 s para 2,3 s.
 - A interface pinta antes de o MSW terminar de iniciar; requisições e socket esperam o MSW, então o tempo real continua passando pelo `socket.io-client`.
 - CLS zerado no detalhe, reservando o espaço das imagens.
 
-Com isso o detalhe desktop foi de 57 para 91. O próximo passo, se houvesse mais tempo, seria tirar as ~89 kB de JavaScript não usado apontadas pelo relatório (Zod e TanStack Router carregam por inteiro no início).
+Com isso o detalhe desktop foi de 57 para 96 e o início mobile de 65 para 70. No detalhe mobile o LCP é a imagem do NFT, que depende da resposta da API simulada, então o shell não ajuda. O próximo passo, se houvesse mais tempo, seria tirar as ~89 kB de JavaScript não usado apontadas pelo relatório (Zod e TanStack Router carregam por inteiro no início).
 
 ## Ambiente
 
