@@ -16,7 +16,7 @@ export function Fields<T extends FieldValues>({
     const error = form.formState.errors[field]?.message
     const id = `${prefix}-${name}`
     return (
-      <div key={name}>
+      <div key={name} className="min-w-0 space-y-2 text-sm">
         <label htmlFor={id}>{String(label)}</label>
         <Input
           id={id}
@@ -31,7 +31,11 @@ export function Fields<T extends FieldValues>({
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
         />
-        {error && <p id={`${id}-error`}>{String(error)}</p>}
+        {error && (
+          <p className="text-destructive" id={`${id}-error`}>
+            {String(error)}
+          </p>
+        )}
       </div>
     )
   })

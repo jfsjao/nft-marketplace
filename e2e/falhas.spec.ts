@@ -62,7 +62,9 @@ test('price-change invalida revisão e exige novo aceite', async ({ page }) => {
     page.getByRole('button', { name: 'Revisar pedido', exact: true }),
   ).toBeDisabled()
   await page.getByRole('button', { name: 'Atualizar cotação' }).click()
-  await expect(page.getByText('1.306 ETH', { exact: true })).toBeVisible()
+  await expect(
+    page.getByLabel('Resumo do pedido').getByText('1.306 ETH', { exact: true }),
+  ).toBeVisible()
   await expect(
     page.getByRole('button', { name: 'Aceitar e enviar pedido' }),
   ).toHaveCount(0)
@@ -73,5 +75,7 @@ test('price-change invalida revisão e exige novo aceite', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Pagamento confirmado' }),
   ).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText('1.306 ETH', { exact: true })).toBeVisible()
+  await expect(
+    page.getByLabel('Resumo do pedido').getByText('1.306 ETH', { exact: true }),
+  ).toBeVisible()
 })

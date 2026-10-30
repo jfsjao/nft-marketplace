@@ -1,3 +1,9 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import {
   cleanup,
@@ -32,7 +38,12 @@ function setup(component: React.ReactNode) {
         new QueryClient({ defaultOptions: { queries: { retry: false } } })
       }
     >
-      {component}
+      <RouterProvider
+        router={createRouter({
+          routeTree: createRootRoute({ component: () => component }),
+          history: createMemoryHistory({ initialEntries: ['/'] }),
+        })}
+      />
     </QueryClientProvider>,
   )
 }

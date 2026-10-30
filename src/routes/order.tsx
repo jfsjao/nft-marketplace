@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button'
+import { formatEth } from '@/lib/eth'
 import { useEffect } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -86,13 +88,63 @@ function OrderContents({
   }, [order.data, userId, generation, orderId, client])
   const data = order.data
   return (
-    <section>
-      <h1>Pedido {orderId}</h1>
+    <section className="mx-auto max-w-2xl space-y-6 border-b-8 border-primary bg-card px-5 py-7 md:px-10 md:py-9">
+      <h1 className="text-center text-sm text-text-secondary">
+        Pedido {orderId}
+      </h1>
       <AsyncState
         query={order}
         loading="Carregando pedido…"
         error="Não foi possível carregar o pedido."
       />
+      {data && (
+        <>
+          <img
+            src="/assets/illustrations/confirmacao-envelope.png"
+            alt=""
+            className="mx-auto h-24 w-24 object-contain"
+          />
+          {data.status === 'confirmed' && (
+            <>
+              <h2 className="text-center text-lg font-semibold text-primary">
+                Pagamento confirmado
+              </h2>
+              <p className="text-center text-sm text-text-secondary">
+                Seus NFTs agora estão na sua carteira
+              </p>
+            </>
+          )}
+          <dl className="grid grid-cols-2 gap-5 border-y border-primary/60 py-5 text-xs text-text-secondary md:grid-cols-4">
+            <div>
+              <dt>ID da transação</dt>
+              <dd className="mt-2 break-all">
+                {data.transactionHash ?? 'Aguardando'}
+              </dd>
+            </div>
+            <div>
+              <dt>Data</dt>
+              <dd className="mt-2">
+                {new Date(data.settledAt ?? data.createdAt).toLocaleDateString(
+                  'pt-BR',
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt>Total</dt>
+              <dd className="mt-2">{formatEth(data.totalEth)} ETH</dd>
+            </div>
+            <div>
+              <dt>Carteira</dt>
+              <dd className="mt-2">
+                {data.provider}
+                <span className="mt-1 block break-all">
+                  {data.walletAddress}
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </>
+      )}
       {data?.status === 'pending' && (
         <p role="status">Aguardando confirmação do pagamento.</p>
       )}
@@ -105,10 +157,10 @@ function OrderContents({
           <Link to="/cart">Voltar ao carrinho</Link>
         </>
       )}
-      {data?.status === 'confirmed' && (
+      {data && (
         <>
-          <h2>Pagamento confirmado</h2>
-          <ul>
+          <h2 className="font-semibold">Detalhes da transação</h2>
+          <ul className="space-y-3">
             {data.lines.map((item) => (
               <li key={`${item.nftId}:${item.editionId}`}>
                 <LineItem item={item} />
@@ -116,11 +168,19 @@ function OrderContents({
             ))}
           </ul>
           <OrderSummary snapshot={data} />
-          <p>Transação: {data.transactionHash}</p>
+          {data.transactionHash && (
+            <p className="text-xs text-text-secondary">
+              Transação: {data.transactionHash}
+            </p>
+          )}
           {data.explorerUrl && /^https?:\/\//i.test(data.explorerUrl) && (
-            <a href={data.explorerUrl} target="_blank" rel="noreferrer">
-              Ver no explorador
-            </a>
+            <div className="text-center">
+              <Button asChild>
+                <a href={data.explorerUrl} target="_blank" rel="noreferrer">
+                  Ver no explorador
+                </a>
+              </Button>
+            </div>
           )}
         </>
       )}

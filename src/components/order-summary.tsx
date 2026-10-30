@@ -10,7 +10,7 @@ export function OrderSummary({
   >
 }) {
   return (
-    <dl>
+    <dl aria-label="Resumo do pedido" className="space-y-4 text-sm">
       {(
         [
           ['Subtotal', 'subtotalEth'],
@@ -19,10 +19,22 @@ export function OrderSummary({
           ['Total', 'totalEth'],
         ] as const
       ).map(([label, key]) => (
-        <div key={key}>
+        <div
+          key={key}
+          className={`flex items-baseline justify-between gap-4 ${key === 'totalEth' ? 'border-t pt-4 text-base font-bold' : 'text-text-secondary'}`}
+        >
           <dt>{label}</dt>
-          <dd>
+          <dd
+            className={
+              key === 'totalEth' ? 'text-highlight' : 'text-foreground'
+            }
+          >
             <EthPrice value={snapshot[key]} />
+            {key === 'networkFeeEth' && (
+              <span className="mt-1 block text-right text-xs font-normal text-highlight">
+                Taxa estimada
+              </span>
+            )}
           </dd>
         </div>
       ))}

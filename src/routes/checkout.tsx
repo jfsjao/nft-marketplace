@@ -174,8 +174,8 @@ function CheckoutForm({
   })
 
   return (
-    <section>
-      <h1>Checkout</h1>
+    <section className="space-y-6">
+      <h1 className="text-2xl font-bold">Checkout</h1>
       {message && <p role="alert">{message}</p>}
       {attempt ? (
         <>
@@ -214,101 +214,121 @@ function CheckoutForm({
               })}
               onChange={() => setReview(null)}
             >
-              <fieldset disabled={busy}>
-                <label>
-                  Carteira
-                  <select
-                    {...form.register('walletId')}
-                    onChange={(event) => {
-                      form.setValue('walletId', event.target.value)
-                      const wallet = wallets.data?.find(
-                        (wallet) => wallet.id === event.target.value,
-                      )
-                      if (wallet) {
-                        form.setValue('network', wallet.network)
-                        form.setValue('provider', wallet.provider)
-                      }
-                    }}
-                  >
-                    <option value="">Selecione</option>
-                    {wallets.data?.map((wallet) => (
-                      <option key={wallet.id} value={wallet.id}>
-                        {wallet.displayName} — {wallet.address}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Rede
-                  <select {...form.register('network')}>
-                    {networkSchema.options.map((value) => (
-                      <option key={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-                {(
-                  [
-                    'displayName',
-                    'username',
-                    'profileName',
-                    'email',
-                    'referralCode',
-                    'ensName',
-                  ] as const
-                ).map((field) => (
-                  <label key={field}>
-                    {
+              <fieldset
+                disabled={busy}
+                className="grid min-w-0 items-start gap-7 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"
+              >
+                <div className="grid min-w-0 gap-5 text-sm md:grid-cols-2 [&_label]:min-w-0 [&_label]:space-y-2 [&_select]:h-10 [&_select]:w-full">
+                  <h2 className="font-semibold md:col-span-2">
+                    Perfil do colecionador
+                  </h2>
+                  {(
+                    [
+                      'displayName',
+                      'username',
+                      'profileName',
+                      'email',
+                      'referralCode',
+                      'ensName',
+                    ] as const
+                  ).map((field) => (
+                    <label key={field}>
                       {
-                        displayName: 'Nome de exibição',
-                        username: 'Usuário',
-                        profileName: 'Nome do perfil',
-                        email: 'E-mail',
-                        referralCode: 'Código de indicação',
-                        ensName: 'Nome ENS',
-                      }[field]
-                    }
-                    <Input
-                      {...form.register(`collector.${field}`)}
-                      type={field === 'email' ? 'email' : 'text'}
-                    />
+                        {
+                          displayName: 'Nome de exibição',
+                          username: 'Usuário',
+                          profileName: 'Nome do perfil',
+                          email: 'E-mail',
+                          referralCode: 'Código de indicação',
+                          ensName: 'Nome ENS',
+                        }[field]
+                      }
+                      <Input
+                        {...form.register(`collector.${field}`)}
+                        type={field === 'email' ? 'email' : 'text'}
+                      />
+                    </label>
+                  ))}
+                  <label>
+                    Observação
+                    <Input {...form.register('note')} />
                   </label>
-                ))}
-                <label>
-                  Observação
-                  <Input {...form.register('note')} />
-                </label>
-                {Object.values(form.formState.errors).map((error, index) => (
-                  <p role="alert" key={index}>
-                    {error.message ?? 'Revise os campos do coletor.'}
-                  </p>
-                ))}
-                {quote && (
-                  <>
-                    <p>
-                      Cotação {quote.id} — {quote.network}
+                  {Object.values(form.formState.errors).map((error, index) => (
+                    <p role="alert" key={index}>
+                      {error.message ?? 'Revise os campos do coletor.'}
                     </p>
-                    <ul>
-                      {quote.lines.map((item) => (
-                        <li key={`${item.nftId}:${item.editionId}`}>
-                          <LineItem item={item} />
-                        </li>
-                      ))}
-                    </ul>
-                    <OrderSummary snapshot={quote} />
-                  </>
-                )}
-                <Button type="button" onClick={() => void refreshQuote()}>
-                  Atualizar cotação
-                </Button>
-                <Button type="submit" disabled={!quote}>
-                  Revisar pedido
-                </Button>
+                  ))}
+                </div>
+                <aside className="min-w-0 space-y-5 rounded-2xl bg-card p-5 md:rounded-lg">
+                  <h2 className="font-semibold">Seus NFTs</h2>
+                  {quote && (
+                    <>
+                      <ul className="space-y-3">
+                        {quote.lines.map((item) => (
+                          <li key={`${item.nftId}:${item.editionId}`}>
+                            <LineItem item={item} />
+                          </li>
+                        ))}
+                      </ul>
+                      <OrderSummary snapshot={quote} />
+                    </>
+                  )}
+                  <Button type="button" onClick={() => void refreshQuote()}>
+                    Atualizar cotação
+                  </Button>
+                  <h3 className="text-sm font-semibold">Carteira e rede</h3>
+                  <div className="grid gap-4 text-sm [&_label]:space-y-2 [&_select]:w-full">
+                    <label>
+                      Carteira
+                      <select
+                        {...form.register('walletId')}
+                        onChange={(event) => {
+                          form.setValue('walletId', event.target.value)
+                          const wallet = wallets.data?.find(
+                            (wallet) => wallet.id === event.target.value,
+                          )
+                          if (wallet) {
+                            form.setValue('network', wallet.network)
+                            form.setValue('provider', wallet.provider)
+                          }
+                        }}
+                      >
+                        <option value="">Selecione</option>
+                        {wallets.data?.map((wallet) => (
+                          <option key={wallet.id} value={wallet.id}>
+                            {wallet.displayName} — {wallet.address}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Rede
+                      <select {...form.register('network')}>
+                        {networkSchema.options.map((value) => (
+                          <option key={value}>{value}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <Button
+                    className="h-12 w-full rounded-full md:rounded-md"
+                    type="submit"
+                    disabled={!quote}
+                  >
+                    Revisar pedido
+                  </Button>
+                </aside>
               </fieldset>
             </form>
           )}
           {review && quote && (
-            <section aria-label="Revisão do pedido">
-              <h2>Revise e aceite a compra</h2>
+            <section
+              aria-label="Revisão do pedido"
+              className="mx-auto max-w-2xl space-y-6 rounded-lg border bg-card p-5 md:p-8"
+            >
+              <h2 className="text-lg font-semibold">
+                Revise e aceite a compra
+              </h2>
               <p>
                 Carteira:{' '}
                 {
@@ -337,7 +357,7 @@ function CheckoutForm({
                 ))}
               </dl>
               {review.note && <p>Observação: {review.note}</p>}
-              <ul>
+              <ul className="space-y-3">
                 {quote.lines.map((item) => (
                   <li key={`${item.nftId}:${item.editionId}`}>
                     <LineItem item={item} />
@@ -346,6 +366,7 @@ function CheckoutForm({
               </ul>
               <OrderSummary snapshot={quote} />
               <Button
+                className="h-12 w-full"
                 disabled={busy}
                 onClick={() =>
                   void send({

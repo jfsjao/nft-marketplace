@@ -80,7 +80,9 @@ export async function confirmed(page: Page) {
     page.getByRole('heading', { name: 'Pagamento confirmado', exact: true }),
   ).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('listitem')).toContainText(['Emerald Ape #042'])
-  await expect(page.getByText('1.206 ETH', { exact: true })).toBeVisible()
+  await expect(
+    page.getByLabel('Resumo do pedido').getByText('1.206 ETH', { exact: true }),
+  ).toBeVisible()
   await expect(page.getByText(/^Transação: 0x/)).toBeVisible()
   await expect(
     page.getByRole('link', { name: 'Ver no explorador' }),

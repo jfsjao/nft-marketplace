@@ -1,3 +1,4 @@
+import { AccountLayout } from '@/components/account-layout'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -31,21 +32,23 @@ export function Profile() {
     retry: false,
   })
   return (
-    <section>
-      <h1>Perfil do colecionador</h1>
-      <AsyncState
-        query={query}
-        loading="Carregando perfil…"
-        error="Não foi possível carregar o perfil."
-      />
-      {query.data && session && (
-        <ProfileForms
-          key={`${session.user.id}:${generation}`}
-          user={query.data}
-          generation={generation}
+    <AccountLayout>
+      <section className="space-y-7">
+        <h1 className="text-xl font-bold">Perfil do colecionador</h1>
+        <AsyncState
+          query={query}
+          loading="Carregando perfil…"
+          error="Não foi possível carregar o perfil."
         />
-      )}
-    </section>
+        {query.data && session && (
+          <ProfileForms
+            key={`${session.user.id}:${generation}`}
+            user={query.data}
+            generation={generation}
+          />
+        )}
+      </section>
+    </AccountLayout>
   )
 }
 function ProfileForms({
@@ -96,6 +99,7 @@ function ProfileForms({
   return (
     <>
       <form
+        className="space-y-5"
         noValidate
         onSubmit={form.handleSubmit(async (input) => {
           setSuccess('')
@@ -110,8 +114,11 @@ function ProfileForms({
           }
         })}
       >
-        <h2>Dados do perfil</h2>
-        <fieldset disabled={form.formState.isSubmitting || busy}>
+        <h2 className="mb-5 font-semibold">Dados do perfil</h2>
+        <fieldset
+          className="grid min-w-0 gap-5 md:grid-cols-2 [&>button]:col-span-full [&>button]:justify-self-start"
+          disabled={form.formState.isSubmitting || busy}
+        >
           <Fields
             form={form}
             prefix="profile"
@@ -130,10 +137,17 @@ function ProfileForms({
         )}
         {success && <p role="status">{success}</p>}
       </form>
-      <section aria-label="Avatar">
-        <h2>Avatar</h2>
+      <section
+        aria-label="Avatar"
+        className="my-8 space-y-4 rounded-lg border bg-card p-5"
+      >
+        <h2 className="mb-5 font-semibold">Avatar</h2>
         {(preview || user.avatarUrl) && (
-          <img src={preview || user.avatarUrl} alt="Avatar do perfil" />
+          <img
+            src={preview || user.avatarUrl}
+            alt="Avatar do perfil"
+            className="size-20 rounded-full object-cover"
+          />
         )}
         <label htmlFor="avatar">Imagem do avatar</label>
         <Input
@@ -187,6 +201,7 @@ function ProfileForms({
         {avatarSuccess && <p role="status">{avatarSuccess}</p>}
       </section>
       <form
+        className="space-y-5"
         noValidate
         onSubmit={password.handleSubmit(async (input) => {
           setPasswordSuccess('')
@@ -203,8 +218,11 @@ function ProfileForms({
           }
         })}
       >
-        <h2>Alterar senha</h2>
-        <fieldset disabled={password.formState.isSubmitting}>
+        <h2 className="mb-5 font-semibold">Alterar senha</h2>
+        <fieldset
+          className="grid min-w-0 gap-5 md:grid-cols-2 [&>button]:col-span-full [&>button]:justify-self-start"
+          disabled={password.formState.isSubmitting}
+        >
           <Fields
             form={password}
             prefix="password"

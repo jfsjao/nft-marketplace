@@ -54,7 +54,11 @@ export function Catalog() {
                   className="flex items-center gap-2 text-muted-foreground"
                 >
                   <input
-                    aria-label={`${value} (${data?.facets[kind].find((facet) => facet.value === value)?.count ?? 0})`}
+                    aria-label={
+                      data
+                        ? `${value} (${data.facets[kind].find((facet) => facet.value === value)?.count ?? 0})`
+                        : value
+                    }
                     className="accent-primary"
                     type="checkbox"
                     checked={(search[kind] as string[]).includes(value)}
@@ -82,10 +86,8 @@ export function Catalog() {
                       solana: 'Solana',
                     }[value]
                   }{' '}
-                  (
-                  {data?.facets[kind].find((facet) => facet.value === value)
-                    ?.count ?? 0}
-                  )
+                  {data &&
+                    `(${data.facets[kind].find((facet) => facet.value === value)?.count ?? 0})`}
                 </label>
               ))}
             </fieldset>

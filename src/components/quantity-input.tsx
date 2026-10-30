@@ -22,12 +22,12 @@ export function QuantityInput({
       onChange(next)
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <label className="mr-2 text-sm text-text-secondary" htmlFor={id}>
+    <div className="flex items-center gap-1">
+      <label className="sr-only" htmlFor={id}>
         {label}
       </label>
       <Button
-        className="size-9 rounded-full p-0 text-xl"
+        className="size-8 shrink-0 rounded-full p-0 text-xl"
         aria-label={`Diminuir ${label.toLowerCase()}`}
         disabled={disabled || value <= 1}
         onClick={() => change(value - 1)}
@@ -35,7 +35,7 @@ export function QuantityInput({
         −
       </Button>
       <Input
-        className="h-9 w-14 border-0 bg-transparent px-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-9 w-10 border-0 bg-transparent px-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         id={id}
         type="number"
         min={1}
@@ -45,7 +45,7 @@ export function QuantityInput({
         onChange={(event) => change(event.target.valueAsNumber)}
       />
       <Button
-        className="size-9 rounded-full p-0 text-xl"
+        className="size-8 shrink-0 rounded-full p-0 text-xl"
         aria-label={`Aumentar ${label.toLowerCase()}`}
         disabled={disabled || value >= max}
         onClick={() => change(value + 1)}

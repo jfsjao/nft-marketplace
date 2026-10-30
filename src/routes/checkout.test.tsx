@@ -86,7 +86,7 @@ function setup() {
   return userEvent.setup()
 }
 async function review(user: ReturnType<typeof userEvent.setup>) {
-  await screen.findByText('Cotação q1 — ethereum')
+  await screen.findByText('1.01 ETH')
   await user.selectOptions(await screen.findByLabelText('Carteira'), 'w1')
   for (const label of [
     'Nome de exibição',
@@ -146,7 +146,7 @@ it('QUOTE_STALE mostra a nova cotação e exige revisão e aceite antes de nova 
     .mockResolvedValue(order)
   const user = setup()
   await review(user)
-  await screen.findByText('Cotação q2 — ethereum')
+  await screen.findByText('2.01 ETH')
   expect(screen.getByText('2.01 ETH')).toBeInTheDocument()
   expect(
     screen.queryByRole('button', { name: 'Aceitar e enviar pedido' }),

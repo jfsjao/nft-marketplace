@@ -1,3 +1,4 @@
+import { AccountLayout } from '@/components/account-layout'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -24,25 +25,27 @@ export function Wallets() {
     retry: false,
   })
   return (
-    <section>
-      <h1>Carteiras</h1>
-      <AsyncState
-        query={query}
-        loading="Carregando carteiras…"
-        error="Não foi possível carregar carteiras."
-      />
-      {query.data &&
-        session &&
-        (['primary', 'secondary'] as const).map((slot) => (
-          <WalletForm
-            key={`${session.user.id}:${generation}:${slot}`}
-            wallet={query.data.find((wallet) => wallet.slot === slot)}
-            slot={slot}
-            userId={session.user.id}
-            generation={generation}
-          />
-        ))}
-    </section>
+    <AccountLayout>
+      <section className="space-y-7">
+        <h1 className="text-xl font-bold">Carteiras</h1>
+        <AsyncState
+          query={query}
+          loading="Carregando carteiras…"
+          error="Não foi possível carregar carteiras."
+        />
+        {query.data &&
+          session &&
+          (['primary', 'secondary'] as const).map((slot) => (
+            <WalletForm
+              key={`${session.user.id}:${generation}:${slot}`}
+              wallet={query.data.find((wallet) => wallet.slot === slot)}
+              slot={slot}
+              userId={session.user.id}
+              generation={generation}
+            />
+          ))}
+      </section>
+    </AccountLayout>
   )
 }
 function WalletForm({
@@ -68,6 +71,7 @@ function WalletForm({
   })
   return (
     <form
+      className="space-y-5 border-t pt-6 first:border-t-0 first:pt-0"
       noValidate
       onSubmit={form.handleSubmit(async (input) => {
         setSuccess('')
@@ -86,11 +90,16 @@ function WalletForm({
         }
       })}
     >
-      <h2>Carteira {slot === 'primary' ? 'principal' : 'secundária'}</h2>
+      <h2 className="mb-5 font-semibold">
+        Carteira {slot === 'primary' ? 'principal' : 'secundária'}
+      </h2>
       {!wallet && slot === 'secondary' && (
         <p>Você ainda não adicionou uma carteira secundária</p>
       )}
-      <fieldset disabled={form.formState.isSubmitting}>
+      <fieldset
+        className="grid min-w-0 gap-5 md:grid-cols-2 [&>button]:col-span-full [&>button]:justify-self-start"
+        disabled={form.formState.isSubmitting}
+      >
         <Fields
           form={form}
           prefix={slot}
@@ -111,6 +120,7 @@ function WalletForm({
               {field === 'network' ? 'Rede' : 'Provedor'}
             </label>
             <select
+              className="mt-2 h-10 w-full text-sm"
               id={`${slot}-${field}`}
               {...form.register(field)}
               aria-invalid={!!form.formState.errors[field]}
