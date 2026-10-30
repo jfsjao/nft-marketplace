@@ -3,6 +3,10 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Mock com latência simulada: folga para máquinas lentas sem mascarar erro com retry.
+  workers: 4,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   reporter: [['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:4173',
