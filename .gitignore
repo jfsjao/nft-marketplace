@@ -24,3 +24,6 @@ test-results/
 # Misc
 .DS_Store
 *.log
+
+# Cache do Lighthouse CI (os relatórios finais ficam em lighthouse/)
+.lighthouseci/
