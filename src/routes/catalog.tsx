@@ -70,7 +70,7 @@ export function Catalog() {
             pattern="[0-9]+(\.[0-9]{1,18})?"
           />
         </label>
-        <Button>Buscar</Button>
+        <Button type="submit">Buscar</Button>
       </form>
       {(['collections', 'networks'] as const).map((kind) => (
         <fieldset key={kind}>

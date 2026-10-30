@@ -46,10 +46,6 @@ test('detalhe inexistente informa não encontrado', async ({ page }) => {
 })
 
 test('botão Buscar aplica a busca digitada', async ({ page }) => {
-  test.fixme(
-    true,
-    'Catalog usa Button sem type="submit"; Button assume type="button", então Buscar não envia o formulário.',
-  )
   await page.getByLabel('Busca', { exact: true }).fill('Emerald')
   await page.getByRole('button', { name: 'Buscar', exact: true }).click()
   await expect(page).toHaveURL(/[?&]q=Emerald(?:&|$)/)

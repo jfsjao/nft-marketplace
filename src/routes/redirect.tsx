@@ -27,5 +27,5 @@ export function validateRedirect(value: unknown): string | undefined {
 }
 
 export const loginSearchSchema = z.object({
-  redirect: z.unknown().transform(validateRedirect),
+  redirect: z.unknown().optional().transform(validateRedirect),
 })

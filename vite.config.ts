@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: './',
+  base: '/',
   resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
