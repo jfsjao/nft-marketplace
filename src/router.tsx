@@ -19,6 +19,8 @@ import { Nft } from './routes/nft'
 import { Cart } from './routes/cart'
 import { Checkout } from './routes/checkout'
 import { Order } from './routes/order'
+import { Profile } from './routes/profile'
+import { Wallets } from './routes/wallets'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -94,13 +96,13 @@ const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/profile',
   beforeLoad: requireAuth,
-  component: () => <Placeholder title="Perfil do colecionador" />,
+  component: Profile,
 })
 const walletsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/wallets',
   beforeLoad: requireAuth,
-  component: () => <Placeholder title="Carteiras" />,
+  component: Wallets,
 })
 const designRoute = createRoute({
   getParentRoute: () => rootRoute,
