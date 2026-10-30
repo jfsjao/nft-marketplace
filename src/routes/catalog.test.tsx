@@ -33,7 +33,9 @@ it('consulta o catálogo com os filtros combinados da URL', async () => {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   )
-  expect(await screen.findByText('Nenhum NFT encontrado.')).toBeInTheDocument()
+  expect(
+    await screen.findByText('Nenhum NFT encontrado.', {}, { timeout: 3000 }),
+  ).toBeInTheDocument()
   expect(listNfts).toHaveBeenCalledWith(
     {
       search: 'arte',

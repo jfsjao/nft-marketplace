@@ -70,12 +70,28 @@ export function AuthForm({
     }
   })
   return (
-    <form onSubmit={submit} noValidate>
-      <h1>{isRegister ? 'Criar conta' : 'Entrar'}</h1>
+    <form onSubmit={submit} noValidate className="space-y-5">
+      <h1 className="mb-8 text-center text-2xl font-bold">
+        {isRegister ? 'Criar conta' : 'Entrar'}
+      </h1>
       {fields.map((name) => (
         <div key={name}>
-          <label htmlFor={name}>{labels[name]}</label>
+          <label
+            className="mb-2 block text-xs text-muted-foreground"
+            htmlFor={name}
+          >
+            {labels[name]}
+          </label>
           <Input
+            className="h-12 rounded-lg border-border bg-transparent px-4 placeholder:text-muted-foreground focus-visible:border-primary"
+            placeholder={
+              {
+                username: 'Nome de usuário',
+                email: 'Digite seu e-mail',
+                password: 'Senha',
+                confirmPassword: 'Confirmar senha',
+              }[name]
+            }
             id={name}
             type={
               name.includes('assword')
@@ -100,20 +116,74 @@ export function AuthForm({
             {...form.register(name)}
           />
           {form.formState.errors[name] && (
-            <p id={`${name}-error`}>{form.formState.errors[name]?.message}</p>
+            <p className="mt-2 text-xs text-destructive" id={`${name}-error`}>
+              {form.formState.errors[name]?.message}
+            </p>
           )}
         </div>
       ))}
       {form.formState.errors.root && (
-        <p role="alert">{form.formState.errors.root.message}</p>
+        <p className="text-sm text-destructive" role="alert">
+          {form.formState.errors.root.message}
+        </p>
       )}
-      <Button type="submit" disabled={form.formState.isSubmitting}>
+      {!isRegister && (
+        <div className="text-right">
+          <button
+            type="button"
+            disabled
+            className="text-sm text-primary"
+            title="Recuperação de senha indisponível nesta versão"
+          >
+            Esqueceu a senha?
+          </button>
+        </div>
+      )}
+      <Button
+        className="mt-5 h-14 w-full text-base font-bold"
+        type="submit"
+        disabled={form.formState.isSubmitting}
+      >
         {form.formState.isSubmitting
           ? 'Aguarde…'
           : isRegister
             ? 'Cadastrar'
             : 'Entrar'}
       </Button>
+      <div className="pt-6">
+        <div className="mb-5 flex items-center gap-3 text-xs">
+          <span className="h-px flex-1 bg-border" />
+          Ou continue com
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="space-y-3">
+          <Button
+            variant="outline"
+            className="h-12 w-full text-text-secondary"
+            disabled
+          >
+            <span aria-hidden="true" className="text-xl font-bold text-primary">
+              G
+            </span>
+            Continuar com Google
+          </Button>
+          <Button
+            variant="outline"
+            className="h-12 w-full text-text-secondary"
+            disabled
+          >
+            <img
+              src="/assets/icons/redes-sociais/facebook.svg"
+              alt=""
+              className="size-5"
+            />
+            Continuar com Facebook
+          </Button>
+        </div>
+        <p className="mt-3 text-center text-[10px] text-muted-foreground">
+          Login social indisponível nesta versão.
+        </p>
+      </div>
     </form>
   )
 }

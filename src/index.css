@@ -114,3 +114,23 @@
     background: none;
   }
 }
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 4px;
+  }
+  a,
+  button,
+  input,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  select {
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-background);
+  }
+}

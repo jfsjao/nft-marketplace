@@ -72,6 +72,8 @@ export function FavoriteButton({ id }: { id: string }) {
   return (
     <>
       <Button
+        variant="outline"
+        className="text-primary aria-pressed:bg-primary/15"
         aria-pressed={favorite}
         disabled={busy}
         onClick={() => {
@@ -80,6 +82,11 @@ export function FavoriteButton({ id }: { id: string }) {
           else mutation.mutate({ id, favorite: !favorite })
         }}
       >
+        <img
+          src="/assets/icons/interface/coracao.svg"
+          alt=""
+          className="size-4"
+        />
         {favorite ? 'Remover favorito' : 'Favoritar'}
       </Button>
       {mutation.isError && (

@@ -4,7 +4,12 @@ test('busca, filtros e ordenação persistem na URL e no histórico', async ({
   page,
 }) => {
   await page.goto('/?q=%23')
+  await page.getByLabel('Ordenação').waitFor()
+  const filters = page.getByRole('button', { name: 'Filtros', exact: true })
+  if (await filters.isVisible()) await filters.click()
   await page.getByRole('checkbox', { name: /^ethereum/ }).check()
+  const closeFilters = page.getByRole('button', { name: 'Ver resultados' })
+  if (await closeFilters.isVisible()) await closeFilters.click()
   await page.getByLabel('Ordenação').selectOption('price-asc')
   await expect(page.getByRole('button', { name: 'Próxima' })).toBeEnabled()
   const firstPage = page.url()
@@ -27,7 +32,9 @@ test('busca, filtros e ordenação persistem na URL e no histórico', async ({
   await page.reload()
   await expect(page).toHaveURL(secondPage)
   await expect(page.getByLabel('Busca', { exact: true })).toHaveValue('#')
+  if (await filters.isVisible()) await filters.click()
   await expect(page.getByRole('checkbox', { name: /^ethereum/ })).toBeChecked()
+  if (await closeFilters.isVisible()) await closeFilters.click()
   await expect(page.getByLabel('Ordenação')).toHaveValue('price-asc')
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(
     secondItem!,
