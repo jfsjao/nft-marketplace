@@ -20,8 +20,10 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             />
           ))}
         </div>
+        {/* Véu do modal: a página atrás fica só como contexto. */}
+        <div className="absolute inset-0 bg-background/70" />
       </div>
-      <section className="relative mx-auto max-w-md space-y-8 py-10 md:border-b-8 md:border-primary md:bg-card md:px-10 md:py-12">
+      <section className="relative z-10 mx-auto max-w-md space-y-8 py-10 md:border-b-8 md:border-primary md:bg-card md:px-10 md:py-12 md:shadow-2xl">
         <p className="mb-16 text-center text-3xl font-bold tracking-widest md:hidden">
           KURIO
         </p>
