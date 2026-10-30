@@ -64,6 +64,9 @@ export function createSessionStore(storage: Storage = localStorage) {
     const guestId = state.guestId
     const result = await action()
     if (generation !== state.generation) return
+    // Junta o carrinho antes de expor a sessão: navegar cedo não perde os itens.
+    await auth.mergeCart(guestId, result.token)
+    if (generation !== state.generation) return
     void queryClient?.cancelQueries()
     queryClient?.clear()
     disconnect()
@@ -71,10 +74,8 @@ export function createSessionStore(storage: Storage = localStorage) {
       session: result,
       status: 'authenticated',
       generation: generation + 1,
+      guestId: newGuest(),
     })
-    const activeGeneration = state.generation
-    await auth.mergeCart(guestId)
-    if (activeGeneration === state.generation) update({ guestId: newGuest() })
   }
   return {
     getSnapshot: () => state,

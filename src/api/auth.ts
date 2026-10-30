@@ -24,9 +24,11 @@ export async function getSession() {
 export async function logout() {
   await api.post('/auth/logout')
 }
-export async function mergeCart(guestId: string) {
-  return cartSchema.parse(
-    (await api.post('/cart/merge', mergeCartInputSchema.parse({ guestId })))
-      .data,
+export async function mergeCart(guestId: string, token: string) {
+  const { data } = await api.post(
+    '/cart/merge',
+    mergeCartInputSchema.parse({ guestId }),
+    { headers: { Authorization: `Bearer ${token}` } },
   )
+  return cartSchema.parse(data)
 }

@@ -32,7 +32,7 @@ it('persiste sessão e visitante; restaura pelo bootstrap', async () => {
   const store = createSessionStore()
   const guest = store.getSnapshot().guestId
   await store.login({ email: session.user.email, password: 'senha' })
-  expect(auth.mergeCart).toHaveBeenCalledWith(guest)
+  expect(auth.mergeCart).toHaveBeenCalledWith(guest, 'token')
   expect(store.getSnapshot().guestId).not.toBe(guest)
   expect(JSON.parse(localStorage.getItem('kurio:session')!)).toEqual(session)
   const restored = createSessionStore()
