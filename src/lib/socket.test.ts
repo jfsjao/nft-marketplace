@@ -90,7 +90,7 @@ it('conecta, filtra por sessão e versão, reconecta e libera assinaturas', asyn
     socket.on('order.updated', orders[index]),
   )
   const received = vi.fn()
-  const client = createRealtime('owner', db.users[1].id)
+  const client = await createRealtime('owner', db.users[1].id)
   clients.push(client)
   const privateReceived = vi.fn()
   client.on('order.updated', privateReceived)

@@ -18,7 +18,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             <img
               key={name}
               alt=""
-              src={`/assets/nfts/${name}.png`}
+              src={`/assets/nfts/${name}.webp`}
+              width={500}
+              height={500}
+              loading="lazy"
+              decoding="async"
               className="aspect-square w-full rounded-xl opacity-50"
             />
           ))}

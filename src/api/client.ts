@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { apiErrorSchema, type ApiError } from '@/domain/errors'
+import { whenReady } from '@/mocks/ready'
 
 export const api = axios.create({ baseURL: '/api', timeout: 10_000 })
 
@@ -20,17 +21,14 @@ export function configureSession(options: typeof session) {
 }
 
 const generations = new WeakMap<object, number>()
-api.interceptors.request.use(
-  (config) => {
-    const { token, guestId, generation } = session.getCredentials()
-    if (token) config.headers.set('Authorization', `Bearer ${token}`)
-    config.headers.set('X-Guest-Id', guestId)
-    generations.set(config, generation)
-    return config
-  },
-  undefined,
-  { synchronous: true },
-)
+api.interceptors.request.use(async (config) => {
+  await whenReady()
+  const { token, guestId, generation } = session.getCredentials()
+  if (token) config.headers.set('Authorization', `Bearer ${token}`)
+  config.headers.set('X-Guest-Id', guestId)
+  generations.set(config, generation)
+  return config
+})
 api.interceptors.response.use(undefined, (error: unknown) => {
   if (axios.isCancel(error)) return Promise.reject(error)
   if (axios.isAxiosError(error)) {

@@ -32,6 +32,8 @@ export function LineItem({
           alt={item.name}
           width={80}
           height={80}
+          loading="lazy"
+          decoding="async"
           className="size-20 rounded-lg object-cover md:size-16"
         />
         <div className="min-w-0">

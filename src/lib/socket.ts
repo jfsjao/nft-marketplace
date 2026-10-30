@@ -1,5 +1,5 @@
-import { io } from 'socket.io-client'
 import { serverEventSchema, type ServerEvent } from '@/domain/events'
+import { whenReady } from '@/mocks/ready'
 
 const observers = new Set<(event: ServerEvent) => void>()
 const reconnectListeners = new Set<() => void>()
@@ -19,7 +19,9 @@ type EventType = ServerEvent['type']
 type Listener = (event: ServerEvent) => void
 
 // Conectar somente depois de await worker.start().
-export function createRealtime(token?: string, userId?: string) {
+export async function createRealtime(token?: string, userId?: string) {
+  await whenReady()
+  const { io } = await import('socket.io-client')
   const socket = io(
     typeof location === 'undefined' ? 'http://localhost' : location.origin,
     { transports: ['websocket'], auth: { token }, forceNew: true },

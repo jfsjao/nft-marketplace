@@ -20,6 +20,7 @@ export function NftCard({
             width={160}
             height={160}
             loading="lazy"
+            decoding="async"
             className="aspect-square w-full rounded-2xl object-cover"
           />
           {nft.isRare && (

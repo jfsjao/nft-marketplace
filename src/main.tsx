@@ -1,15 +1,21 @@
 import './index.css'
+import { holdRequestsUntil } from './mocks/ready'
 
-// O app (e o socket.io-client) só carrega depois do MSW: o cliente guarda o
-// WebSocket global no import, e o mock precisa ter trocado ele antes.
+// A interface pinta antes do worker: requisições e socket esperam o MSW (veja
+// api/client e lib/socket), então o primeiro paint não depende dos mocks.
 async function start() {
+  const app = import('./bootstrap')
   if (import.meta.env.VITE_ENABLE_MOCKS !== 'false') {
-    const { worker } = await import('./mocks/browser')
-    await worker.start({ onUnhandledRequest: 'bypass' })
-    const { settle } = await import('./mocks/handlers/util')
-    await settle()
+    const mocks = (async () => {
+      const { worker } = await import('./mocks/browser')
+      await worker.start({ onUnhandledRequest: 'bypass' })
+      const { settle } = await import('./mocks/handlers/util')
+      await settle()
+    })()
+    holdRequestsUntil(mocks)
+    void mocks.catch(() => {})
   }
-  const { mount } = await import('./bootstrap')
+  const { mount } = await app
   mount()
 }
 

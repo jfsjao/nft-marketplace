@@ -10,10 +10,10 @@ export const networkFees: Record<Network, EthAmount> = {
 }
 
 const images = [
-  'ape-esmeralda.png',
-  'ape-moletom-roxo.png',
-  'ape-blazer.png',
-  'ape-fones-verdes.png',
+  'ape-esmeralda.webp',
+  'ape-moletom-roxo.webp',
+  'ape-blazer.webp',
+  'ape-fones-verdes.webp',
 ]
 const featured = [
   ['Emerald Ape', '042', '1.19', 0],

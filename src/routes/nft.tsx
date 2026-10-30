@@ -103,6 +103,8 @@ export function Nft() {
               alt={`${nft.name}, imagem ${selectedImage + 1}`}
               width={600}
               height={600}
+              fetchPriority="high"
+              decoding="async"
               className="aspect-square w-full rounded-2xl object-cover"
             />
           </div>
@@ -119,6 +121,10 @@ export function Nft() {
                   <img
                     src={image}
                     alt=""
+                    width={120}
+                    height={120}
+                    loading="lazy"
+                    decoding="async"
                     className="aspect-square w-full rounded-md object-cover"
                   />
                 </button>
@@ -287,6 +293,7 @@ export function Nft() {
         <AsyncState
           query={related}
           loading="Carregando coleção"
+          layout="related"
           error="Não foi possível carregar a coleção."
           className="h-72"
         />

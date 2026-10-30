@@ -3,25 +3,17 @@ import {
   createRoute,
   createRouter,
   defaultParseSearch,
+  lazyRouteComponent,
   redirect,
   stripSearchParams,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import App from './App'
 import { sessionStore } from './features/session/store'
-import { Login } from './routes/login'
-import { Register } from './routes/register'
-import DesignSystemPreview from './routes/design'
 import { Placeholder } from './routes/placeholder'
 import { loginSearchSchema, validateRedirect } from './routes/redirect'
 import { catalogSearchSchema } from './features/catalog/search'
 import { Catalog } from './routes/catalog'
-import { Nft } from './routes/nft'
-import { Cart } from './routes/cart'
-import { Checkout } from './routes/checkout'
-import { Order } from './routes/order'
-import { Profile } from './routes/profile'
-import { Wallets } from './routes/wallets'
 
 export interface RouterContext {
   queryClient: QueryClient
@@ -50,7 +42,7 @@ const catalogRoute = createRoute({
 const nftRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/nft/$nftId',
-  component: Nft,
+  component: lazyRouteComponent(() => import('./routes/nft'), 'Nft'),
 })
 
 async function requireAuth({ location }: { location: { href: string } }) {
@@ -71,48 +63,48 @@ async function requireAuth({ location }: { location: { href: string } }) {
 const cartRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/cart',
-  component: Cart,
+  component: lazyRouteComponent(() => import('./routes/cart'), 'Cart'),
 })
 const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   beforeLoad: requireAuth,
-  component: Checkout,
+  component: lazyRouteComponent(() => import('./routes/checkout'), 'Checkout'),
 })
 const orderRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/orders/$orderId',
   beforeLoad: requireAuth,
-  component: Order,
+  component: lazyRouteComponent(() => import('./routes/order'), 'Order'),
 })
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   validateSearch: (search) => loginSearchSchema.parse(search),
-  component: Login,
+  component: lazyRouteComponent(() => import('./routes/login'), 'Login'),
 })
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
   validateSearch: (search) => loginSearchSchema.parse(search),
-  component: Register,
+  component: lazyRouteComponent(() => import('./routes/register'), 'Register'),
 })
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/profile',
   beforeLoad: requireAuth,
-  component: Profile,
+  component: lazyRouteComponent(() => import('./routes/profile'), 'Profile'),
 })
 const walletsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/wallets',
   beforeLoad: requireAuth,
-  component: Wallets,
+  component: lazyRouteComponent(() => import('./routes/wallets'), 'Wallets'),
 })
 const designRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/__design',
-  component: DesignSystemPreview,
+  component: lazyRouteComponent(() => import('./routes/design')),
 })
 
 export const router = createRouter({

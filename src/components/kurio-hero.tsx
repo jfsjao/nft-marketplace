@@ -21,8 +21,12 @@ export function KurioHero() {
         </Button>
       </div>
       <img
-        src="/assets/nfts/ape-esmeralda.png"
+        src="/assets/nfts/ape-esmeralda.webp"
         alt=""
+        width={500}
+        height={500}
+        fetchPriority="high"
+        decoding="async"
         className="aspect-square w-full rounded-2xl object-cover md:max-h-[420px]"
       />
       <div
