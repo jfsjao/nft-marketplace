@@ -56,6 +56,19 @@
   --radius-sm: 0.375rem;
 }
 @layer base {
+  /* Mobile: campos nunca passam da largura da tela (fieldset tem min-width: auto). */
+  fieldset {
+    min-width: 0;
+  }
+  /* Endereços e hashes não têm espaços: quebram só se não couberem. */
+  body {
+    overflow-wrap: anywhere;
+  }
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+  }
   * {
     border-color: var(--color-border);
     scrollbar-width: thin;
