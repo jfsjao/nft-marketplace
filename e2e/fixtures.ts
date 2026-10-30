@@ -54,7 +54,9 @@ export async function checkout(page: Page) {
   await expect(
     page.getByRole('heading', { name: 'Checkout', exact: true }),
   ).toBeVisible()
-  await page.getByLabel('Carteira', { exact: true }).selectOption('wallet-1')
+  await page
+    .getByRole('combobox', { name: 'Carteira', exact: true })
+    .selectOption('wallet-1')
   for (const [label, value] of Object.entries({
     'Nome de exibição': 'Colecionador',
     Usuário: 'colecionador',

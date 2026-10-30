@@ -46,14 +46,9 @@ const nftRoute = createRoute({
   component: Nft,
 })
 
-async function requireAuth({
-  context,
-  location,
-}: {
-  context: RouterContext
-  location: { href: string }
-}) {
-  if (context.auth.status === 'unknown')
+async function requireAuth({ location }: { location: { href: string } }) {
+  // O contexto do router pode estar desatualizado no primeiro load; a sessão é a fonte.
+  if (sessionStore.getSnapshot().status === 'unknown')
     await sessionStore.ready().catch((error) => {
       if (sessionStore.getSnapshot().status === 'unknown') throw error
     })
