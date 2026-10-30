@@ -4,6 +4,7 @@ import {
   createRouter,
   defaultParseSearch,
   redirect,
+  stripSearchParams,
 } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import App from './App'
@@ -38,7 +39,11 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const catalogRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  validateSearch: (search) => catalogSearchSchema.parse(search),
+  validateSearch: catalogSearchSchema,
+  // Tira da URL os filtros no valor padrão: o link fica curto e igual ao inicial.
+  search: {
+    middlewares: [stripSearchParams(catalogSearchSchema.parse({}))],
+  },
   component: Catalog,
 })
 
