@@ -1,0 +1,74 @@
+[
+  {
+    "url": "http://localhost:4180/",
+    "isRepresentativeRun": false,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_31_51.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_31_51.report.json",
+    "summary": {
+      "performance": 0.53,
+      "accessibility": 0.99,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  },
+  {
+    "url": "http://localhost:4180/",
+    "isRepresentativeRun": false,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_32_39.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_32_39.report.json",
+    "summary": {
+      "performance": 0.53,
+      "accessibility": 0.99,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  },
+  {
+    "url": "http://localhost:4180/nft/nft-1",
+    "isRepresentativeRun": false,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_02.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_02.report.json",
+    "summary": {
+      "performance": 0.54,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  },
+  {
+    "url": "http://localhost:4180/nft/nft-1",
+    "isRepresentativeRun": false,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_47.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_47.report.json",
+    "summary": {
+      "performance": 0.51,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  },
+  {
+    "url": "http://localhost:4180/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_32_16.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost--2026_10_30_04_32_16.report.json",
+    "summary": {
+      "performance": 0.54,
+      "accessibility": 0.99,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  },
+  {
+    "url": "http://localhost:4180/nft/nft-1",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_23.report.html",
+    "jsonPath": "/home/jf/Documentos/Repositorios/nft-marketplace-test/lighthouse/mobile/localhost-nft_nft_1-2026_10_30_04_33_23.report.json",
+    "summary": {
+      "performance": 0.52,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.92
+    }
+  }
+]
