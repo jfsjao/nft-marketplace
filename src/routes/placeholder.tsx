@@ -6,9 +6,9 @@ export function Placeholder({
   parameters?: Record<string, unknown>
 }) {
   return (
-    <main className="p-6">
+    <section className="p-6">
       <h1>{title}</h1>
       {parameters && <pre>{JSON.stringify(parameters, null, 2)}</pre>}
-    </main>
+    </section>
   )
 }

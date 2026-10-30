@@ -7,4 +7,4 @@
 
 Fonte obtida do repositório oficial Google Fonts: https://github.com/google/fonts/tree/main/ofl/robotomono
 
-No Vite, estes arquivos ficam disponíveis sob `/assets/`. Exemplo: `/assets/nfts/ape-esmeralda.png`. As capturas completas das telas permanecem fora do repositório. Roboto Mono já é aplicada globalmente em `src/index.css`; as quatro artes são usadas na listagem inicial. A composição completa das telas será implementada por etapas.
+No Vite, estes arquivos ficam disponíveis sob `/assets/`. Exemplo: `/assets/nfts/ape-esmeralda.png`. As capturas completas das telas permanecem fora do repositório. Roboto Mono já é aplicada globalmente em `src/index.css`; as quatro artes são usadas na listagem inicial.

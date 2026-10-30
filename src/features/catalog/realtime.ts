@@ -32,7 +32,7 @@ export function useCatalogRealtime() {
         },
         () => {
           // Reconexão: eventos perdidos não voltam, então recarrega pela API.
-          for (const key of ['nft', 'nfts', 'cart', 'quote', 'order'])
+          for (const key of ['nft', 'nfts', 'cart', 'quote', 'orders'])
             void client.invalidateQueries({ queryKey: [key] })
         },
       ),

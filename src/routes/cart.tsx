@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCart, updateCartItem, removeCartItem } from '@/api/cart'
@@ -9,6 +9,7 @@ import type { ApiError } from '@/domain/errors'
 import { useSession } from '@/features/session/use-session'
 import { sessionStore } from '@/features/session/store'
 import { useRealtimeEvent } from '@/features/realtime/use-realtime-event'
+import { getCoupon, setCoupon as persistCoupon } from '@/features/cart/coupon'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AsyncState } from '@/components/async-state'
@@ -17,38 +18,53 @@ import { LineItem } from '@/components/line-item'
 import { QuantityInput } from '@/components/quantity-input'
 import { OrderSummary } from '@/components/order-summary'
 
+let lastGuestOwner: string | undefined
+
 export function Cart() {
   const { session, guestId, generation } = useSession()
   const owner = session?.user.id ?? guestId
-  return <CartContents key={`${owner}:${generation}`} />
+  useEffect(() => {
+    if (!session) lastGuestOwner = guestId
+  }, [guestId, session])
+  return (
+    <CartContents
+      key={`${owner}:${generation}`}
+      couponSource={session ? lastGuestOwner : undefined}
+    />
+  )
 }
 
-function CartContents() {
+function CartContents({ couponSource }: { couponSource?: string }) {
   const { session, guestId, generation, status } = useSession()
+  const owner = session?.user.id ?? guestId
   const client = useQueryClient()
-  const cartKey = ['cart', session?.user.id ?? guestId]
-  const [coupon, setCoupon] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState('')
+  const cartKey = ['cart', owner]
+  const rememberedCoupon =
+    getCoupon(couponSource ?? owner) ?? getCoupon(owner) ?? ''
+  const [coupon, setCoupon] = useState(rememberedCoupon)
+  const [appliedCoupon, setAppliedCoupon] = useState(rememberedCoupon)
   const [notice, setNotice] = useState('')
+  useEffect(() => {
+    if (!couponSource) return
+    const guestCoupon = getCoupon(couponSource)
+    if (guestCoupon) {
+      persistCoupon(owner, guestCoupon)
+      persistCoupon(couponSource)
+    }
+    lastGuestOwner = undefined
+  }, [couponSource, owner])
   const cart = useQuery({
     queryKey: cartKey,
     queryFn: ({ signal }) => getCart(signal),
     enabled: status !== 'unknown',
   })
-  const quoteKey = [
-    'quote',
-    session?.user.id,
-    cart.data?.revision,
-    appliedCoupon,
-  ]
+  const quoteKey = ['quote', owner, cart.data?.revision, appliedCoupon]
   const quote = useQuery({
     queryKey: quoteKey,
     queryFn: ({ signal }) =>
       createQuote({ couponCode: appliedCoupon || undefined }, signal),
     enabled:
-      status === 'authenticated' &&
-      !!cart.data?.items.length &&
-      !cart.isFetching,
+      status !== 'unknown' && !!cart.data?.items.length && !cart.isFetching,
   })
   const mutation = useMutation({
     mutationFn: ({ item, quantity }: { item: CartItem; quantity?: number }) =>
@@ -60,7 +76,7 @@ function CartContents() {
       await client.cancelQueries({ queryKey: cartKey })
       if (generation !== sessionStore.getSnapshot().generation) return
       client.setQueryData(cartKey, data)
-      void client.invalidateQueries({ queryKey: ['quote', session?.user.id] })
+      void client.invalidateQueries({ queryKey: ['quote', owner] })
     },
   })
   useRealtimeEvent('nft.updated', (event) => {
@@ -78,10 +94,8 @@ function CartContents() {
       .cancelQueries({ queryKey: cartKey })
       .then(() => client.invalidateQueries({ queryKey: cartKey }))
     void client
-      .cancelQueries({ queryKey: ['quote', session?.user.id] })
-      .then(() =>
-        client.invalidateQueries({ queryKey: ['quote', session?.user.id] }),
-      )
+      .cancelQueries({ queryKey: ['quote', owner] })
+      .then(() => client.invalidateQueries({ queryKey: ['quote', owner] }))
   })
   const couponError = quote.error as ApiError | null
   const invalidCoupon =
@@ -171,68 +185,61 @@ function CartContents() {
                     Subtotal: <EthPrice value={cart.data.subtotalEth} />
                   </p>
                 )}
-                {status === 'authenticated' ? (
-                  <>
-                    <form
-                      className="space-y-3"
-                      onSubmit={(event) => {
-                        event.preventDefault()
-                        if (coupon.trim() === appliedCoupon)
-                          void quote.refetch()
-                        else setAppliedCoupon(coupon.trim())
+                <form
+                  className="space-y-3"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    const code = coupon.trim()
+                    persistCoupon(owner, code || undefined)
+                    if (code === appliedCoupon) void quote.refetch()
+                    else setAppliedCoupon(code)
+                  }}
+                >
+                  <label htmlFor="coupon">Cupom</label>
+                  <Input
+                    placeholder="Digite o código promocional..."
+                    id="coupon"
+                    value={coupon}
+                    onChange={(event) => setCoupon(event.target.value)}
+                    aria-invalid={invalidCoupon}
+                    aria-describedby={
+                      invalidCoupon ? 'coupon-error' : undefined
+                    }
+                  />
+                  {invalidCoupon && (
+                    <p id="coupon-error" role="alert">
+                      {couponError.message}
+                    </p>
+                  )}
+                  <Button
+                    type="submit"
+                    disabled={quote.isFetching || mutation.isPending}
+                  >
+                    Aplicar cupom
+                  </Button>
+                  {appliedCoupon && (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setCoupon('')
+                        setAppliedCoupon('')
+                        persistCoupon(owner)
                       }}
                     >
-                      <label htmlFor="coupon">Cupom</label>
-                      <Input
-                        placeholder="Digite o código promocional..."
-                        id="coupon"
-                        value={coupon}
-                        onChange={(event) => setCoupon(event.target.value)}
-                        aria-invalid={invalidCoupon}
-                        aria-describedby={
-                          invalidCoupon ? 'coupon-error' : undefined
-                        }
-                      />
-                      {invalidCoupon && (
-                        <p id="coupon-error" role="alert">
-                          {couponError.message}
-                        </p>
-                      )}
-                      <Button
-                        type="submit"
-                        disabled={quote.isFetching || mutation.isPending}
-                      >
-                        Aplicar cupom
-                      </Button>
-                      {appliedCoupon && (
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setCoupon('')
-                            setAppliedCoupon('')
-                          }}
-                        >
-                          Remover cupom
-                        </Button>
-                      )}
-                    </form>
-                    <AsyncState
-                      isPending={quote.isFetching}
-                      isError={quote.isError && !invalidCoupon}
-                      refetch={quote.refetch}
-                      loading="Carregando cotação"
-                      error="Não foi possível obter a cotação."
-                      className="h-20"
-                    />
-                    {quote.data && !quote.isFetching && !cart.isFetching && (
-                      <OrderSummary snapshot={quote.data} />
-                    )}
-                  </>
-                ) : (
-                  <p>
-                    Entre na sua conta para aplicar cupom e consultar taxa e
-                    total.
-                  </p>
+                      Remover cupom
+                    </Button>
+                  )}
+                </form>
+                <AsyncState
+                  isPending={quote.isFetching}
+                  isError={quote.isError && !invalidCoupon}
+                  refetch={quote.refetch}
+                  loading="Carregando cotação"
+                  error="Não foi possível obter a cotação."
+                  className="h-20"
+                />
+                {quote.data && !quote.isFetching && !cart.isFetching && (
+                  <OrderSummary snapshot={quote.data} />
                 )}
                 <Button
                   asChild

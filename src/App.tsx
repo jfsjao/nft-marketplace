@@ -41,15 +41,15 @@ export default function App() {
       >
         Início
       </a>
-      <a href="/mercado" title="Fora do escopo desta versão">
+      <span title="Fora do escopo desta versão" aria-disabled="true">
         Mercado
-      </a>
-      <a href="/criadores" title="Fora do escopo desta versão">
+      </span>
+      <span title="Fora do escopo desta versão" aria-disabled="true">
         Criadores
-      </a>
-      <a href="/aprenda" title="Fora do escopo desta versão">
+      </span>
+      <span title="Fora do escopo desta versão" aria-disabled="true">
         Aprenda
-      </a>
+      </span>
     </>
   )
   return (

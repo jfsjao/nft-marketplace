@@ -194,6 +194,13 @@ describe('REST com banco persistente', () => {
     expect(quote.discountEth).toBe('0.338')
     expect(quote.totalEth).toBe('3.058')
   })
+  it('permite cotação para o dono visitante do carrinho', async () => {
+    const headers = { 'X-Guest-Id': 'visitante' }
+    await call('/cart/items', 'POST', item, undefined, headers)
+    const quote = (await call('/quote', 'POST', {}, undefined, headers)).data
+
+    expect(quoteSchema.parse(quote).totalEth).toBe('3.396')
+  })
   it('reserva uma vez, replay antes de validar, conflito e liquidação preservando adições', async () => {
     const token = await login()
     const input = await checkout(token)

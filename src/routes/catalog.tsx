@@ -140,7 +140,6 @@ export function Catalog() {
                 placeholder="Explorar coleções"
                 name="q"
                 defaultValue={search.q}
-                key={search.q}
                 maxLength={80}
               />
             </label>

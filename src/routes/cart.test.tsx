@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import {
   cleanup,
   fireEvent,
@@ -22,13 +22,14 @@ vi.mock('@tanstack/react-router', () => ({
     <a href="/checkout">{children}</a>
   ),
 }))
+const sessionState = vi.hoisted(() => ({
+  session: { user: { id: 'user-1' } } as { user: { id: string } } | null,
+  guestId: 'guest-1',
+  generation: 0,
+  status: 'authenticated' as 'authenticated' | 'guest',
+}))
 vi.mock('@/features/session/use-session', () => ({
-  useSession: () => ({
-    session: { user: { id: 'user-1' } },
-    guestId: 'guest-1',
-    generation: 0,
-    status: 'authenticated',
-  }),
+  useSession: () => sessionState,
 }))
 
 const item = {
@@ -66,7 +67,7 @@ const quote = {
 function setup() {
   vi.mocked(cartApi.getCart).mockResolvedValue(cart)
   vi.mocked(quoteApi.createQuote).mockResolvedValue(quote)
-  render(
+  const view = render(
     <QueryClientProvider
       client={
         new QueryClient({
@@ -80,14 +81,34 @@ function setup() {
       <Cart />
     </QueryClientProvider>,
   )
-  return userEvent.setup()
+  return { user: userEvent.setup(), ...view }
 }
+beforeEach(() => {
+  localStorage.clear()
+  sessionState.session = { user: { id: 'user-1' } }
+  sessionState.guestId = 'guest-1'
+  sessionState.generation = 0
+  sessionState.status = 'authenticated'
+})
 afterEach(() => {
   cleanup()
   vi.resetAllMocks()
 })
+it('mostra desconto, taxa e total na cotação do visitante', async () => {
+  sessionState.session = null
+  sessionState.status = 'guest'
+  setup()
+
+  expect(await screen.findByText('1.01 ETH')).toBeInTheDocument()
+  expect(screen.getByText('Desconto')).toBeInTheDocument()
+  expect(screen.getByText('Taxa de rede')).toBeInTheDocument()
+  expect(quoteApi.createQuote).toHaveBeenCalledWith(
+    { couponCode: undefined },
+    expect.any(AbortSignal),
+  )
+})
 it('altera a quantidade dentro do estoque e remove o item pela API', async () => {
-  const user = setup()
+  const { user } = setup()
   vi.mocked(cartApi.updateCartItem).mockResolvedValue({
     ...cart,
     revision: 1,
@@ -115,7 +136,7 @@ it('altera a quantidade dentro do estoque e remove o item pela API', async () =>
   expect(cartApi.removeCartItem).toHaveBeenCalled()
 })
 it('associa a mensagem de cupom inválido ao campo', async () => {
-  const user = setup()
+  const { user } = setup()
   await screen.findByText('1.01 ETH')
   vi.mocked(quoteApi.createQuote).mockRejectedValue({
     code: 'COUPON_INVALID',
@@ -129,4 +150,40 @@ it('associa a mensagem de cupom inválido ao campo', async () => {
     'Cupom inválido',
   )
   expect(screen.getByLabelText('Cupom')).toHaveAttribute('aria-invalid', 'true')
+  expect(localStorage.getItem('kurio:coupon:user-1')).toBe('INVALIDO')
+})
+it('pré-carrega e remove o cupom do dono do carrinho', async () => {
+  localStorage.setItem('kurio:coupon:user-1', 'kurio10')
+  const { user } = setup()
+
+  expect(await screen.findByLabelText('Cupom')).toHaveValue('kurio10')
+  await waitFor(() =>
+    expect(quoteApi.createQuote).toHaveBeenCalledWith(
+      { couponCode: 'kurio10' },
+      expect.any(AbortSignal),
+    ),
+  )
+  await user.click(screen.getByRole('button', { name: 'Remover cupom' }))
+  expect(localStorage.getItem('kurio:coupon:user-1')).toBeNull()
+})
+it('move o cupom do visitante ao trocar o dono pelo login', async () => {
+  sessionState.session = null
+  sessionState.status = 'guest'
+  localStorage.setItem('kurio:coupon:guest-1', 'kurio10')
+  const { rerender } = setup()
+  await screen.findByText('1.01 ETH')
+
+  sessionState.session = { user: { id: 'user-1' } }
+  sessionState.status = 'authenticated'
+  sessionState.generation = 1
+  rerender(
+    <QueryClientProvider client={new QueryClient()}>
+      <Cart />
+    </QueryClientProvider>,
+  )
+
+  await waitFor(() =>
+    expect(localStorage.getItem('kurio:coupon:user-1')).toBe('kurio10'),
+  )
+  expect(localStorage.getItem('kurio:coupon:guest-1')).toBeNull()
 })

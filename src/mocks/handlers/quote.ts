@@ -3,7 +3,7 @@ import { addEth, applyPercentDiscount } from '@/lib/eth'
 import { cartView, commit, getDb, now, type MockDb } from '../db'
 import { getScenario, setScenario } from '../scenario'
 import { changeEdition } from '../actions'
-import { body, Failure, json, route, userId } from './util'
+import { body, Failure, json, owner, route } from './util'
 
 export function makeQuote(
   db: MockDb,
@@ -106,7 +106,7 @@ export const quoteHandlers = [
   route('post', '/quote', async ({ request }) => {
     const input = await body(request, quoteInputSchema)
     const result = await commit((db) => {
-      const quote = makeQuote(db, userId(request, db), input)
+      const quote = makeQuote(db, owner(request, db), input)
       return { quote }
     })
     const event = getScenario().event

@@ -15,20 +15,20 @@ Fonte da verdade: schemas em `src/domain/*.ts`. Regras operacionais: itens 2 e 5
 
 Todo erro usa `apiErrorSchema`: `{ code, message, fieldErrors?, requestId, quote? }`. `fieldErrors` mapeia campo para array de mensagens. `quote`, quando presente, segue `quoteSchema`; em `QUOTE_STALE`, traz a nova cotação. A UI decide por `code`, nunca pelo texto.
 
-| Código | Status HTTP | Significado |
-| --- | --- | --- |
-| `VALIDATION_ERROR` | 400 ou 422 | Campos inválidos; detalhes em `fieldErrors` |
-| `UNAUTHORIZED` | 401 | Sessão ausente, inválida ou expirada |
-| `FORBIDDEN` | 403 | Recurso de outro usuário |
-| `NOT_FOUND` | 404 | Recurso inexistente |
-| `CONFLICT` | 409 | E-mail/usuário já cadastrado ou carteira duplicada |
-| `IDEMPOTENCY_CONFLICT` | 409 | Mesma chave com corpo diferente |
-| `OUT_OF_STOCK` | 409 | Edição esgotada ou quantidade acima do disponível |
-| `QUOTE_STALE` | 409 | Cotação desatualizada; inclui nova `quote` |
-| `COUPON_INVALID` | 422 | Cupom inválido |
-| `COUPON_EXPIRED` | 422 | Cupom expirado |
-| `PAYMENT_DECLINED` | 402 | Pagamento recusado |
-| `SERVICE_UNAVAILABLE` | 503 | Falha transitória |
+| Código                 | Status HTTP | Significado                                        |
+| ---------------------- | ----------- | -------------------------------------------------- |
+| `VALIDATION_ERROR`     | 400 ou 422  | Campos inválidos; detalhes em `fieldErrors`        |
+| `UNAUTHORIZED`         | 401         | Sessão ausente, inválida ou expirada               |
+| `FORBIDDEN`            | 403         | Recurso de outro usuário                           |
+| `NOT_FOUND`            | 404         | Recurso inexistente                                |
+| `CONFLICT`             | 409         | E-mail/usuário já cadastrado ou carteira duplicada |
+| `IDEMPOTENCY_CONFLICT` | 409         | Mesma chave com corpo diferente                    |
+| `OUT_OF_STOCK`         | 409         | Edição esgotada ou quantidade acima do disponível  |
+| `QUOTE_STALE`          | 409         | Cotação desatualizada; inclui nova `quote`         |
+| `COUPON_INVALID`       | 422         | Cupom inválido                                     |
+| `COUPON_EXPIRED`       | 422         | Cupom expirado                                     |
+| `PAYMENT_DECLINED`     | 402         | Pagamento recusado                                 |
+| `SERVICE_UNAVAILABLE`  | 503         | Falha transitória                                  |
 
 Exemplos de envelopes, com status informado fora do corpo:
 
@@ -48,32 +48,32 @@ Auth: `pública` dispensa sessão; `usuário` exige Bearer; `carrinho` aceita Be
 
 Erros comuns a todas as rotas: `VALIDATION_ERROR` para entrada inválida e `SERVICE_UNAVAILABLE` para falha transitória. Rotas de usuário também retornam `UNAUTHORIZED`; operações de carrinho com Bearer inválido retornam 401. A coluna lista os demais erros aplicáveis. Todos seguem `apiErrorSchema`.
 
-| Método | Rota | Auth | Corpo/query -> schema | Resposta -> schema | Erros adicionais |
-| --- | --- | --- | --- | --- | --- |
-| POST | `/auth/register` | pública | corpo: `registerInputSchema` | 201: `sessionSchema` | `CONFLICT` |
-| POST | `/auth/login` | pública | corpo: `loginInputSchema` | `sessionSchema` | `UNAUTHORIZED` |
-| GET | `/auth/session` | usuário | nenhum | `sessionSchema` | nenhum |
-| POST | `/auth/logout` | usuário | nenhum | 204: sem corpo | nenhum |
-| GET | `/nfts` | pública | query: `catalogQuerySchema` | `nftListSchema` | nenhum |
-| GET | `/nfts/:id` | pública | nenhum | `nftDetailSchema` | `NOT_FOUND` |
-| GET | `/favorites` | usuário | nenhum | `favoritesSchema` | nenhum |
-| PUT | `/favorites/:nftId` | usuário | nenhum | `favoritesSchema` | `NOT_FOUND` |
-| DELETE | `/favorites/:nftId` | usuário | nenhum | `favoritesSchema` | nenhum |
-| GET | `/cart` | carrinho | nenhum | `cartSchema` | nenhum |
-| POST | `/cart/items` | carrinho | corpo: `addCartItemInputSchema` | `cartSchema` | `NOT_FOUND`, `OUT_OF_STOCK` |
-| PATCH | `/cart/items/:nftId/:editionId` | carrinho | corpo: `updateCartItemInputSchema` | `cartSchema` | `NOT_FOUND`, `OUT_OF_STOCK` |
-| DELETE | `/cart/items/:nftId/:editionId` | carrinho | nenhum | `cartSchema` | `NOT_FOUND` |
-| POST | `/cart/merge` | usuário | corpo: `mergeCartInputSchema` | `cartSchema` | nenhum |
-| POST | `/quote` | usuário | corpo: `quoteInputSchema` | `quoteSchema` | `COUPON_INVALID`, `COUPON_EXPIRED`, `OUT_OF_STOCK` |
-| POST | `/orders` | usuário | corpo: `createOrderInputSchema` | 201: `orderSchema`; replay 200 | `IDEMPOTENCY_CONFLICT`, `QUOTE_STALE`, `OUT_OF_STOCK`, `PAYMENT_DECLINED`, `NOT_FOUND`, `FORBIDDEN` |
-| GET | `/orders/:id` | usuário | nenhum | `orderSchema` | `NOT_FOUND`, `FORBIDDEN` |
-| GET | `/profile` | usuário | nenhum | `userSchema` | nenhum |
-| PATCH | `/profile` | usuário | corpo: `updateProfileInputSchema` | `userSchema` | `CONFLICT` |
-| PUT | `/profile/avatar` | usuário | corpo: `avatarInputSchema` | `userSchema` | nenhum |
-| DELETE | `/profile/avatar` | usuário | nenhum | `userSchema` | nenhum |
-| POST | `/profile/password` | usuário | corpo: `changePasswordInputSchema` | 204: sem corpo | nenhum |
-| GET | `/wallets` | usuário | nenhum | array de `walletSchema` | nenhum |
-| PUT | `/wallets/:slot` | usuário | corpo: `walletInputSchema` | `walletSchema` | `CONFLICT` |
+| Método | Rota                            | Auth     | Corpo/query -> schema              | Resposta -> schema             | Erros adicionais                                                                                    |
+| ------ | ------------------------------- | -------- | ---------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| POST   | `/auth/register`                | pública  | corpo: `registerInputSchema`       | 201: `sessionSchema`           | `CONFLICT`                                                                                          |
+| POST   | `/auth/login`                   | pública  | corpo: `loginInputSchema`          | `sessionSchema`                | `UNAUTHORIZED`                                                                                      |
+| GET    | `/auth/session`                 | usuário  | nenhum                             | `sessionSchema`                | nenhum                                                                                              |
+| POST   | `/auth/logout`                  | usuário  | nenhum                             | 204: sem corpo                 | nenhum                                                                                              |
+| GET    | `/nfts`                         | pública  | query: `catalogQuerySchema`        | `nftListSchema`                | nenhum                                                                                              |
+| GET    | `/nfts/:id`                     | pública  | nenhum                             | `nftDetailSchema`              | `NOT_FOUND`                                                                                         |
+| GET    | `/favorites`                    | usuário  | nenhum                             | `favoritesSchema`              | nenhum                                                                                              |
+| PUT    | `/favorites/:nftId`             | usuário  | nenhum                             | `favoritesSchema`              | `NOT_FOUND`                                                                                         |
+| DELETE | `/favorites/:nftId`             | usuário  | nenhum                             | `favoritesSchema`              | nenhum                                                                                              |
+| GET    | `/cart`                         | carrinho | nenhum                             | `cartSchema`                   | nenhum                                                                                              |
+| POST   | `/cart/items`                   | carrinho | corpo: `addCartItemInputSchema`    | `cartSchema`                   | `NOT_FOUND`, `OUT_OF_STOCK`                                                                         |
+| PATCH  | `/cart/items/:nftId/:editionId` | carrinho | corpo: `updateCartItemInputSchema` | `cartSchema`                   | `NOT_FOUND`, `OUT_OF_STOCK`                                                                         |
+| DELETE | `/cart/items/:nftId/:editionId` | carrinho | nenhum                             | `cartSchema`                   | `NOT_FOUND`                                                                                         |
+| POST   | `/cart/merge`                   | usuário  | corpo: `mergeCartInputSchema`      | `cartSchema`                   | nenhum                                                                                              |
+| POST   | `/quote`                        | carrinho | corpo: `quoteInputSchema`          | `quoteSchema`                  | `COUPON_INVALID`, `COUPON_EXPIRED`, `OUT_OF_STOCK`                                                  |
+| POST   | `/orders`                       | usuário  | corpo: `createOrderInputSchema`    | 201: `orderSchema`; replay 200 | `IDEMPOTENCY_CONFLICT`, `QUOTE_STALE`, `OUT_OF_STOCK`, `PAYMENT_DECLINED`, `NOT_FOUND`, `FORBIDDEN` |
+| GET    | `/orders/:id`                   | usuário  | nenhum                             | `orderSchema`                  | `NOT_FOUND`, `FORBIDDEN`                                                                            |
+| GET    | `/profile`                      | usuário  | nenhum                             | `userSchema`                   | nenhum                                                                                              |
+| PATCH  | `/profile`                      | usuário  | corpo: `updateProfileInputSchema`  | `userSchema`                   | `CONFLICT`                                                                                          |
+| PUT    | `/profile/avatar`               | usuário  | corpo: `avatarInputSchema`         | `userSchema`                   | nenhum                                                                                              |
+| DELETE | `/profile/avatar`               | usuário  | nenhum                             | `userSchema`                   | nenhum                                                                                              |
+| POST   | `/profile/password`             | usuário  | corpo: `changePasswordInputSchema` | 204: sem corpo                 | nenhum                                                                                              |
+| GET    | `/wallets`                      | usuário  | nenhum                             | array de `walletSchema`        | nenhum                                                                                              |
+| PUT    | `/wallets/:slot`                | usuário  | corpo: `walletInputSchema`         | `walletSchema`                 | `CONFLICT`                                                                                          |
 
 Os parâmetros de caminho identificam os recursos, sem criar schemas adicionais. Em `/wallets/:slot`, `slot` aceita `primary` ou `secondary` e deve coincidir com o campo obrigatório do corpo.
 
@@ -100,10 +100,10 @@ Perfil: PATCH exige todos os campos de `updateProfileInputSchema` que não são 
 
 Contrato em `src/domain/events.ts`; `serverEventSchema` é a união discriminada por `type`. Ambos os eventos incluem `eventId` não vazio, `version: versionSchema` e `occurredAt: isoDateSchema`.
 
-| Evento | Schema | `resource` | `data` |
-| --- | --- | --- | --- |
-| `nft.updated` | `nftUpdatedEventSchema` | `{ nftId, editionId }` | `{ priceEth, availableQuantity }` |
-| `order.updated` | `orderUpdatedEventSchema` | `{ orderId, userId }` | `{ status }` |
+| Evento          | Schema                    | `resource`             | `data`                            |
+| --------------- | ------------------------- | ---------------------- | --------------------------------- |
+| `nft.updated`   | `nftUpdatedEventSchema`   | `{ nftId, editionId }` | `{ priceEth, availableQuantity }` |
+| `order.updated` | `orderUpdatedEventSchema` | `{ orderId, userId }`  | `{ status }`                      |
 
 `priceEth` segue `ethAmountSchema`; `availableQuantity` é inteiro não negativo; `status` segue `orderStatusSchema`: `pending`, `confirmed` ou `declined`. O evento de NFT identifica a edição, cuja `version` no REST é comparável à do evento. O evento de pedido compara com `orderSchema.version` e só é entregue ao dono.
 
