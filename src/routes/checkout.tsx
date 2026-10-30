@@ -19,7 +19,9 @@ import {
   saveAttempt,
   type Attempt,
 } from '@/features/checkout/attempt'
-import { Totals } from '@/features/checkout/totals'
+import { OrderSummary } from '@/components/order-summary'
+import { LineItem } from '@/components/line-item'
+import { AsyncState } from '@/components/async-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -184,15 +186,11 @@ function CheckoutForm({
         </>
       ) : (
         <>
-          {wallets.isPending && <p role="status">Carregando carteiras…</p>}
-          {wallets.isError && (
-            <p role="alert">
-              Não foi possível carregar carteiras.{' '}
-              <Button onClick={() => void wallets.refetch()}>
-                Tentar novamente
-              </Button>
-            </p>
-          )}
+          <AsyncState
+            query={wallets}
+            loading="Carregando carteiras…"
+            error="Não foi possível carregar carteiras."
+          />
           {wallets.data?.length === 0 ? (
             <Link to="/wallets">Cadastrar carteira</Link>
           ) : (
@@ -289,7 +287,14 @@ function CheckoutForm({
                     <p>
                       Cotação {quote.id} — {quote.network}
                     </p>
-                    <Totals snapshot={quote} />
+                    <ul>
+                      {quote.lines.map((item) => (
+                        <li key={`${item.nftId}:${item.editionId}`}>
+                          <LineItem item={item} />
+                        </li>
+                      ))}
+                    </ul>
+                    <OrderSummary snapshot={quote} />
                   </>
                 )}
                 <Button type="button" onClick={() => void refreshQuote()}>
@@ -332,7 +337,14 @@ function CheckoutForm({
                 ))}
               </dl>
               {review.note && <p>Observação: {review.note}</p>}
-              <Totals snapshot={quote} />
+              <ul>
+                {quote.lines.map((item) => (
+                  <li key={`${item.nftId}:${item.editionId}`}>
+                    <LineItem item={item} />
+                  </li>
+                ))}
+              </ul>
+              <OrderSummary snapshot={quote} />
               <Button
                 disabled={busy}
                 onClick={() =>

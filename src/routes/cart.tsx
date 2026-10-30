@@ -10,8 +10,11 @@ import { sessionStore } from '@/features/session/store'
 import { useRealtimeEvent } from '@/features/realtime/use-realtime-event'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
-import { formatEth } from '@/lib/eth'
+import { AsyncState } from '@/components/async-state'
+import { EthPrice } from '@/components/eth-price'
+import { LineItem } from '@/components/line-item'
+import { QuantityInput } from '@/components/quantity-input'
+import { OrderSummary } from '@/components/order-summary'
 
 export function Cart() {
   const { session, guestId, generation } = useSession()
@@ -94,74 +97,58 @@ function CartContents() {
           {adjustment.message}
         </p>
       ))}
-      {cart.isPending && (
-        <Skeleton aria-label="Carregando carrinho" className="h-20" />
-      )}
-      {cart.isError && (
-        <div role="alert">
-          Não foi possível carregar o carrinho.{' '}
-          <Button onClick={() => void cart.refetch()}>Tentar novamente</Button>
-        </div>
-      )}
+      <AsyncState
+        query={cart}
+        loading="Carregando carrinho"
+        error="Não foi possível carregar o carrinho."
+        className="h-20"
+      />
       {cart.data && (
         <>
           {!cart.data.items.length ? (
-            <p>Seu carrinho está vazio.</p>
+            <AsyncState empty emptyMessage="Seu carrinho está vazio." />
           ) : (
             <>
               <ul>
                 {cart.data.items.map((item) => (
                   <li key={`${item.nftId}:${item.editionId}`}>
-                    <h2>
-                      {item.name} — {item.editionLabel}
-                    </h2>
-                    <p>
-                      {formatEth(item.unitPriceEth)} ETH por unidade;{' '}
-                      {formatEth(item.lineTotalEth)} ETH
-                    </p>
-                    <label>
-                      Quantidade de {item.name}
-                      <Input
-                        type="number"
-                        min={1}
-                        max={item.availableQuantity}
-                        value={item.quantity}
-                        disabled={mutation.isPending}
-                        onChange={(event) => {
-                          const quantity = event.target.valueAsNumber
-                          if (
-                            Number.isInteger(quantity) &&
-                            quantity >= 1 &&
-                            quantity <= item.availableQuantity &&
-                            quantity !== item.quantity
-                          )
+                    <LineItem
+                      item={item}
+                      quantity={
+                        <QuantityInput
+                          label={`Quantidade de ${item.name}`}
+                          value={item.quantity}
+                          max={item.availableQuantity}
+                          disabled={mutation.isPending}
+                          onChange={(quantity) =>
                             mutation.mutate({ item, quantity })
-                        }}
-                      />
-                    </label>
-                    <Button
-                      disabled={mutation.isPending}
-                      onClick={() => mutation.mutate({ item })}
+                          }
+                        />
+                      }
                     >
-                      Remover {item.name}
-                    </Button>
+                      <Button
+                        disabled={mutation.isPending}
+                        onClick={() => mutation.mutate({ item })}
+                      >
+                        Remover {item.name}
+                      </Button>
+                    </LineItem>
                   </li>
                 ))}
               </ul>
-              {mutation.isError && (
-                <div role="alert">
-                  {(mutation.error as unknown as ApiError).message ??
-                    'Não foi possível alterar o carrinho.'}
-                  <Button
-                    onClick={() =>
-                      mutation.variables && mutation.mutate(mutation.variables)
-                    }
-                  >
-                    Tentar novamente
-                  </Button>
-                </div>
-              )}
-              <p>Subtotal: {formatEth(cart.data.subtotalEth)} ETH</p>
+              <AsyncState
+                isError={mutation.isError}
+                error={
+                  (mutation.error as ApiError | null)?.message ??
+                  'Não foi possível alterar o carrinho.'
+                }
+                refetch={() =>
+                  mutation.variables && mutation.mutate(mutation.variables)
+                }
+              />
+              <p>
+                Subtotal: <EthPrice value={cart.data.subtotalEth} />
+              </p>
               {status === 'authenticated' ? (
                 <>
                   <form
@@ -204,31 +191,16 @@ function CartContents() {
                       </Button>
                     )}
                   </form>
-                  {quote.isFetching && (
-                    <Skeleton
-                      aria-label="Carregando cotação"
-                      className="h-20"
-                    />
-                  )}
-                  {quote.isError && !invalidCoupon && (
-                    <div role="alert">
-                      Não foi possível obter a cotação.{' '}
-                      <Button onClick={() => void quote.refetch()}>
-                        Tentar novamente
-                      </Button>
-                    </div>
-                  )}
+                  <AsyncState
+                    isPending={quote.isFetching}
+                    isError={quote.isError && !invalidCoupon}
+                    refetch={quote.refetch}
+                    loading="Carregando cotação"
+                    error="Não foi possível obter a cotação."
+                    className="h-20"
+                  />
                   {quote.data && !quote.isFetching && !cart.isFetching && (
-                    <dl>
-                      <dt>Subtotal</dt>
-                      <dd>{formatEth(quote.data.subtotalEth)} ETH</dd>
-                      <dt>Desconto</dt>
-                      <dd>{formatEth(quote.data.discountEth)} ETH</dd>
-                      <dt>Taxa de rede</dt>
-                      <dd>{formatEth(quote.data.networkFeeEth)} ETH</dd>
-                      <dt>Total</dt>
-                      <dd>{formatEth(quote.data.totalEth)} ETH</dd>
-                    </dl>
+                    <OrderSummary snapshot={quote.data} />
                   )}
                 </>
               ) : (

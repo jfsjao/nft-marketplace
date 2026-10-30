@@ -8,8 +8,9 @@ import { sessionStore } from '@/features/session/store'
 import { useRealtimeEvent } from '@/features/realtime/use-realtime-event'
 import { observeRealtime } from '@/lib/socket'
 import { clearAttempt, readAttempt } from '@/features/checkout/attempt'
-import { Totals } from '@/features/checkout/totals'
-import { Button } from '@/components/ui/button'
+import { OrderSummary } from '@/components/order-summary'
+import { LineItem } from '@/components/line-item'
+import { AsyncState } from '@/components/async-state'
 
 export function Order() {
   const { orderId } = useParams({ from: '/orders/$orderId' })
@@ -87,13 +88,11 @@ function OrderContents({
   return (
     <section>
       <h1>Pedido {orderId}</h1>
-      {order.isPending && <p role="status">Carregando pedido…</p>}
-      {order.isError && (
-        <p role="alert">
-          Não foi possível carregar o pedido.{' '}
-          <Button onClick={() => void order.refetch()}>Tentar novamente</Button>
-        </p>
-      )}
+      <AsyncState
+        query={order}
+        loading="Carregando pedido…"
+        error="Não foi possível carregar o pedido."
+      />
       {data?.status === 'pending' && (
         <p role="status">Aguardando confirmação do pagamento.</p>
       )}
@@ -109,7 +108,14 @@ function OrderContents({
       {data?.status === 'confirmed' && (
         <>
           <h2>Pagamento confirmado</h2>
-          <Totals snapshot={data} />
+          <ul>
+            {data.lines.map((item) => (
+              <li key={`${item.nftId}:${item.editionId}`}>
+                <LineItem item={item} />
+              </li>
+            ))}
+          </ul>
+          <OrderSummary snapshot={data} />
           <p>Transação: {data.transactionHash}</p>
           {data.explorerUrl && /^https?:\/\//i.test(data.explorerUrl) && (
             <a href={data.explorerUrl} target="_blank" rel="noreferrer">

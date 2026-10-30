@@ -6,8 +6,9 @@ import { nftDetailSchema } from '@/domain/nft'
 import { apiErrorSchema } from '@/domain/errors'
 import { cartSchema } from '@/domain/cart'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+import { QuantityInput } from '@/components/quantity-input'
+import { EthPrice } from '@/components/eth-price'
+import { AsyncState } from '@/components/async-state'
 import { FavoriteButton } from '@/features/catalog/favorites'
 import { useSession } from '@/features/session/use-session'
 import { sessionStore } from '@/features/session/store'
@@ -61,18 +62,19 @@ export function Nft() {
         })
     },
   })
-  if (detail.isPending)
-    return <Skeleton aria-label="Carregando NFT" className="h-40" />
-  if (detail.isError)
+  if (detail.isPending || detail.isError)
     return (
-      <div role="alert">
-        <h1>
-          {apiErrorSchema.safeParse(detail.error).data?.code === 'NOT_FOUND'
-            ? 'NFT não encontrado'
-            : 'Não foi possível carregar o NFT'}
-        </h1>
-        <Button onClick={() => void detail.refetch()}>Tentar novamente</Button>
-      </div>
+      <AsyncState
+        query={detail}
+        loading="Carregando NFT"
+        error={
+          <h1>
+            {apiErrorSchema.safeParse(detail.error).data?.code === 'NOT_FOUND'
+              ? 'NFT não encontrado'
+              : 'Não foi possível carregar o NFT'}
+          </h1>
+        }
+      />
     )
   const nft = detail.data
   return (
@@ -113,7 +115,7 @@ export function Nft() {
                 setQuantity(1)
               }}
             />
-            {item.label}: {item.priceEth} ETH —{' '}
+            {item.label}: <EthPrice value={item.priceEth} /> —{' '}
             {item.availableQuantity
               ? `${item.availableQuantity} disponíveis`
               : 'Esgotada'}
@@ -121,34 +123,26 @@ export function Nft() {
         ))}
       </fieldset>
       {!edition && <p>Nenhuma edição disponível.</p>}
-      <label>
-        Quantidade
-        <Input
-          type="number"
-          min={1}
-          max={edition?.availableQuantity ?? 0}
-          value={amount}
-          disabled={!amount}
-          onChange={(event) =>
-            setQuantity(
-              Math.max(1, Math.floor(Number(event.target.value) || 1)),
-            )
-          }
-        />
-      </label>
+      <QuantityInput
+        value={amount}
+        max={edition?.availableQuantity ?? 0}
+        disabled={!amount}
+        onChange={setQuantity}
+      />
       <Button
         disabled={!amount || cart.isPending}
         onClick={() => cart.mutate()}
       >
         Adicionar ao carrinho
       </Button>
-      {cart.isError && (
-        <p role="alert">
-          {apiErrorSchema.safeParse(cart.error).data?.message ??
-            'Não foi possível adicionar ao carrinho.'}
-          <Button onClick={() => cart.mutate()}>Tentar novamente</Button>
-        </p>
-      )}
+      <AsyncState
+        isError={cart.isError}
+        error={
+          apiErrorSchema.safeParse(cart.error).data?.message ??
+          'Não foi possível adicionar ao carrinho.'
+        }
+        refetch={() => cart.mutate()}
+      />
       {cart.isSuccess && <p role="status">Adicionado ao carrinho.</p>}
       <FavoriteButton id={nft.id} />
     </article>

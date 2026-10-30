@@ -1,9 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { listNfts } from '@/api/nfts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+import { AsyncState } from '@/components/async-state'
+import { NftCard } from '@/components/nft-card'
 import {
   collectionSchema,
   catalogTabSchema,
@@ -122,34 +123,22 @@ export function Catalog() {
           <option value="price-desc">Maior preço</option>
         </select>
       </label>
-      {isPending ? (
-        <Skeleton aria-label="Carregando catálogo" className="h-40" />
-      ) : isError ? (
-        <div role="alert">
-          Não foi possível carregar o catálogo.
-          <Button onClick={() => void refetch()}>Tentar novamente</Button>
-        </div>
-      ) : (
+      <AsyncState
+        isPending={isPending}
+        isError={isError}
+        refetch={refetch}
+        loading="Carregando catálogo"
+        error="Não foi possível carregar o catálogo."
+      />
+      {data && !isPending && !isError && (
         <div aria-busy={isFetching}>
           {data.items.length === 0 ? (
-            <p>Nenhum NFT encontrado.</p>
+            <AsyncState empty emptyMessage="Nenhum NFT encontrado." />
           ) : (
             <ul>
               {data.items.map((nft) => (
                 <li key={nft.id}>
-                  <Link to="/nft/$nftId" params={{ nftId: nft.id }}>
-                    <img
-                      src={nft.imageUrl}
-                      alt={nft.name}
-                      width={160}
-                      height={160}
-                    />
-                    <h2>{nft.name}</h2>
-                  </Link>
-                  <p>
-                    {nft.priceEth} ETH {nft.soldOut && '— Esgotado'}
-                  </p>
-                  <FavoriteButton id={nft.id} />
+                  <NftCard nft={nft} actions={<FavoriteButton id={nft.id} />} />
                 </li>
               ))}
             </ul>
